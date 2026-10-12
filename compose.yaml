@@ -1,0 +1,44 @@
+name: diego-portfolio-back
+
+# API of diegoespinarodriguez.com. The web container (repository My-Personal-WebSite) reaches it as "api"
+# through the shared network diego-portfolio-net. Start-Docker.ps1 creates the network and the data volume.
+services:
+  api:
+    image: diego-portfolio-api:local
+    container_name: diego-portfolio-api
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ASPNETCORE_HTTP_PORTS: "8080"
+      Portfolio__DataPath: /app/data
+      ReverseProxy__Enabled: "true"
+      # Optional read-only token to raise the GitHub API limit; the cache works without it.
+      GitHub__Token: ${PORTFOLIO_GITHUB_TOKEN:-}
+    ports:
+      - "127.0.0.1:${PORTFOLIO_API_PORT:-8081}:8080"
+    volumes:
+      - portfolio-data:/app/data
+    networks:
+      portfolio:
+        aliases:
+          - api
+    read_only: true
+    tmpfs:
+      - /tmp
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    restart: unless-stopped
+
+networks:
+  portfolio:
+    name: diego-portfolio-net
+    external: true
+
+volumes:
+  portfolio-data:
+    name: diego-portfolio-data
+    external: true

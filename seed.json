@@ -1,0 +1,215 @@
+{
+  "revision": "initial",
+  "profile": {
+    "name": "Diego Espina Rodríguez",
+    "role": "Backend Developer · .NET / C#",
+    "headline": "Backends .NET que aguantan *la carga real.*",
+    "intro": "Desarrollador backend con más de 3 años construyendo APIs REST, integraciones entre sistemas y lógica de negocio crítica sobre .NET y SQL Server. Me especializo en la parte difícil: datos a escala de millones de registros, procesos asíncronos que mantienen la consistencia y rendimiento medido.",
+    "bio": "Diseño APIs desde cero aislando la capa de acceso a datos y he llevado consultas y endpoints de decenas de segundos a respuestas por debajo del segundo. Trabajo con tests automatizados, colas de mensajes y ciclo completo en Azure y Azure DevOps: del diseño al despliegue y el soporte en producción.\n\nMe gusta entender el sistema entero, también lo que ve quien lo usa. Por eso completo el backend con React y TypeScript cuando el proyecto lo necesita, y mantengo sitios WordPress en producción.",
+    "personal": "Futbolista federado en competición y gimnasio a diario. La constancia, la disciplina y el trabajo en equipo que me exige el campo son los mismos que aplico al código.",
+    "location": "Oviedo, Asturias",
+    "availability": "Abierto a nuevas oportunidades · remoto, híbrido o presencial",
+    "languages": "Español nativo · Inglés profesional",
+    "email": "diegoespinarodriguez@gmail.com",
+    "github": "https://github.com/diegoesp10",
+    "linkedin": "https://www.linkedin.com/in/diego-espina-rodr%C3%ADguez-747364243/",
+    "portrait": ""
+  },
+  "projects": [
+    {
+      "id": "murmur",
+      "title": "Murmur · Transcriptor de reuniones",
+      "category": "Full stack",
+      "description": "Transcribe reuniones con marcas de tiempo, distingue quién habla y genera resúmenes con modelos que se ejecutan en local.",
+      "details": "Aplicación completa para transcribir reuniones sin depender de APIs de IA de pago. Se graba desde el navegador o se sube un audio o un vídeo, se sigue el progreso en directo y se obtiene una transcripción con hablantes que se puede buscar, resumir y exportar.\n\nEl backend, en ASP.NET Core sobre .NET 10, recibe los archivos por streaming, los encola en SQL Server y los procesa en segundo plano: Whisper.net transcribe, pyannote Community-1 separa a los hablantes y Ollama genera los resúmenes. El progreso llega al frontal mediante Server-Sent Events. El frontal, Murmur, está hecho con React y TypeScript.",
+      "year": "2026",
+      "status": "Código abierto",
+      "url": "",
+      "image": "",
+      "tags": [".NET 10", "ASP.NET Core", "SQL Server", "Whisper", "Ollama", "React", "TypeScript", "Docker"],
+      "art": "wave",
+      "featured": true,
+      "highlights": [
+        "Cola persistente en SQL Server y procesamiento en segundo plano",
+        "Progreso en tiempo real mediante Server-Sent Events",
+        "Diarización de la reunión completa con identidades de voz estables",
+        "Resúmenes con decisiones, tareas y referencias a los segmentos originales",
+        "Modelos en local: sin claves de OpenAI ni consumo de APIs de pago"
+      ],
+      "links": [
+        { "label": "Repositorio backend", "url": "https://github.com/diegoesp10/Transcriptor-Back" },
+        { "label": "Repositorio frontend", "url": "https://github.com/diegoesp10/Transcriptor-Front" }
+      ]
+    },
+    {
+      "id": "bills-engine",
+      "title": "Subscription Billing Engine",
+      "category": "Backend .NET",
+      "description": "Motor de facturación para suscripciones: importes, monedas, reparto exacto y redondeo contable, cubierto con tests.",
+      "details": "Núcleo de dominio para facturar suscripciones en .NET 10, centrado en que el dinero cuadre siempre.\n\nModela importes y monedas como value objects, reparte cantidades sin perder unidades mínimas y aplica reglas de redondeo contable explícitas. El comportamiento crítico del dominio está cubierto con tests unitarios en xUnit.",
+      "year": "2026",
+      "status": "Código abierto",
+      "url": "",
+      "image": "",
+      "tags": [".NET 10", "C#", "Diseño de dominio", "xUnit"],
+      "art": "ledger",
+      "featured": true,
+      "highlights": [
+        "Value objects para importes y monedas",
+        "Reparto exacto de importes sin perder unidades mínimas",
+        "Reglas de redondeo contable explícitas",
+        "Tests unitarios en xUnit sobre el dominio"
+      ],
+      "links": [
+        { "label": "Repositorio", "url": "https://github.com/diegoesp10/Bills-Engine" }
+      ]
+    },
+    {
+      "id": "portfolio",
+      "title": "diegoespinarodriguez.com",
+      "category": "Full stack",
+      "description": "Mi web personal: una API en ASP.NET Core 10 por capas y un frontal React, cada uno en su contenedor.",
+      "details": "Esta web también es un proyecto. El backend es una API en ASP.NET Core 10 organizada en Domain, Application, Infrastructure y API, con inyección de dependencias explícita, validación centralizada, control de concurrencia por revisión y caché HTTP con ETag.\n\nLa sección de GitHub consulta la API pública con caché en memoria y modo degradado: si GitHub no responde, se sirve el último resultado válido. El frontal es React 19 con TypeScript y Vite, servido por Nginx. Los dos contenedores se ejecutan sin usuario root y con sistema de archivos de solo lectura.",
+      "year": "2026",
+      "status": "En evolución",
+      "url": "",
+      "image": "",
+      "tags": [".NET 10", "ASP.NET Core", "React", "TypeScript", "Docker", "Nginx"],
+      "art": "orange",
+      "featured": true,
+      "highlights": [
+        "Arquitectura por capas con contratos explícitos",
+        "Integración con la API de GitHub con caché y modo degradado",
+        "ETag, límite de peticiones y cabeceras de seguridad",
+        "Contenedores sin root y de solo lectura",
+        "Editor local con control de concurrencia"
+      ],
+      "links": [
+        { "label": "Repositorio frontend", "url": "https://github.com/diegoesp10/My-Personal-WebSite" },
+        { "label": "Repositorio backend", "url": "https://github.com/diegoesp10/My-personal-Website-Back" }
+      ]
+    },
+    {
+      "id": "mijares",
+      "title": "Mijares Abogados",
+      "category": "WordPress",
+      "description": "Publicación, modificación y mantenimiento de la web de un despacho de abogados de Oviedo, en funcionamiento.",
+      "details": "Sitio WordPress en producción de Mijares Abogados, despacho con sede en Oviedo.\n\nMe encargo de su publicación, modificación y mantenimiento: adaptaciones de contenido y ajustes de diseño y funcionalidad sobre un sitio que está en funcionamiento.",
+      "year": "",
+      "status": "En producción",
+      "url": "https://www.mijaresabogados.es",
+      "image": "",
+      "tags": ["WordPress", "PHP", "CSS", "Mantenimiento web"],
+      "art": "ink",
+      "featured": true,
+      "highlights": [
+        "Sitio WordPress en producción",
+        "Publicación y adaptación de contenidos",
+        "Ajustes de diseño y funcionalidad",
+        "Mantenimiento del sitio"
+      ],
+      "links": []
+    },
+    {
+      "id": "syncforge",
+      "title": "SyncForge",
+      "category": "Backend .NET",
+      "description": "Plataforma para subir, procesar y consultar documentos con un asistente de IA, autenticación en dos pasos y almacenamiento en Azure.",
+      "details": "Producto propio en desarrollo. Un backend .NET por capas recibe archivos (PDF, Word, Excel e imágenes), los procesa y permite consultarlos con un asistente de IA que cita sus fuentes, con modelos locales mediante Ollama y un catálogo de proveedores seleccionable.\n\nIncluye autenticación en dos pasos con Microsoft Authenticator y códigos de recuperación, licencias con límites de consumo de tokens y almacenamiento en Azure Blob Storage. El frontal está hecho con React 19, TypeScript y Vite.\n\nEl código es privado; puedo enseñarlo en una entrevista.",
+      "year": "2026",
+      "status": "En desarrollo · código privado",
+      "url": "",
+      "image": "",
+      "tags": [".NET", "ASP.NET Core", "SQL Server", "Azure Blob Storage", "Ollama", "MFA", "React"],
+      "art": "grid",
+      "featured": false,
+      "highlights": [
+        "Asistente de IA sobre documentos con fuentes citadas",
+        "Autenticación en dos pasos (TOTP) y códigos de recuperación",
+        "Licencias con límites de consumo de tokens",
+        "Almacenamiento de archivos en Azure Blob Storage"
+      ],
+      "links": []
+    }
+  ],
+  "experience": [
+    {
+      "id": "wembley-studios",
+      "role": "Backend Developer (.NET)",
+      "company": "Wembley Studios",
+      "companyUrl": "",
+      "start": "2025-10",
+      "end": "2026-05",
+      "location": "100 % remoto",
+      "summary": "Backend en C# y .NET 8 sobre dominios de negocio con reglas densas, del diseño al soporte en producción.",
+      "highlights": [
+        "Diseño e implementación desde cero de más de 25 endpoints REST con validaciones encadenadas, máquinas de estado y casos límite resueltos sin romper contratos ya en producción.",
+        "Rediseño de la capa de acceso a datos, aislándola del resto de la aplicación: consultas asíncronas, proyecciones a DTO, paginación y eliminación de N+1. Endpoints de más de 30 segundos pasaron a responder en menos de 1 segundo.",
+        "Integraciones con sistemas y APIs de terceros mediante colas de mensajes, reintentos e idempotencia, para que los procesos fueran repetibles y consistentes ante fallos, timeouts o respuestas parciales.",
+        "Tests unitarios y de integración sobre la lógica de negocio y los endpoints críticos, ejecutados en el pipeline en cada entrega.",
+        "Ciclo completo en Azure y Azure DevOps: pipelines de CI/CD, despliegues a QA y producción y diagnóstico de incidencias en producción.",
+        "Proyecto interno de I+D: agente basado en IA para automatizar consultas y tareas recurrentes sobre Azure DevOps."
+      ],
+      "stack": ["C#", ".NET 8", "ASP.NET Core", "Entity Framework Core", "LINQ", "SQL Server", "Colas de mensajes", "xUnit", "Azure", "Azure DevOps", "CI/CD"]
+    },
+    {
+      "id": "adico",
+      "role": "Desarrollador de Software / ERP",
+      "company": "Adico · Asturiana de Desarrollos Informáticos y Comunicaciones",
+      "companyUrl": "",
+      "start": "2023-04",
+      "end": "2025-09",
+      "location": "Oviedo · presencial",
+      "summary": "Desarrollo a medida sobre el ERP Solmicro Expertis para clientes con bases de datos de millones de registros.",
+      "highlights": [
+        "Motores de cálculo y reglas de negocio para facturación, inventario y flujos administrativos en producción.",
+        "Optimización de consultas y procedimientos T-SQL: revisión de planes de ejecución, ajuste de índices y reescritura de consultas, reduciendo procesos e informes de decenas de segundos a menos de un segundo.",
+        "Integración y sincronización entre el ERP y sistemas externos, garantizando la consistencia de los datos cuando alguna de las partes fallaba.",
+        "Automatización de procesos de facturación, inventario y reporting que antes eran manuales.",
+        "Análisis funcional y trato directo con el cliente: requisitos, validación de lo implantado y resolución de incidencias críticas.",
+        "Explotación de datos e informes con Crystal Reports para el análisis operativo."
+      ],
+      "stack": ["C#", ".NET", "VB.NET", "SQL Server", "T-SQL", "MySQL", "Solmicro Expertis", "Crystal Reports"]
+    }
+  ],
+  "education": [
+    {
+      "id": "daw",
+      "title": "Técnico Superior en Desarrollo de Aplicaciones Web (DAW)",
+      "center": "IES Monte Naranco",
+      "location": "Oviedo",
+      "start": "2020",
+      "end": "2023"
+    }
+  ],
+  "skills": [
+    { "id": "lenguajes", "title": "Lenguajes y frameworks", "description": "El ecosistema en el que trabajo cada día.", "tags": ["C#", ".NET 8 / 10", "ASP.NET Core", "Web API", "Entity Framework Core", "LINQ"] },
+    { "id": "datos", "title": "Datos y rendimiento", "description": "Consultas que responden en menos de un segundo sobre millones de registros.", "tags": ["SQL Server", "T-SQL", "Procedimientos almacenados", "Índices y planes de ejecución", "MySQL / MariaDB"] },
+    { "id": "arquitectura", "title": "Arquitectura backend", "description": "APIs con contratos estables y procesos que no pierden datos cuando algo falla.", "tags": ["APIs REST", "Arquitectura por capas", "SOLID", "Procesos asíncronos", "Colas de mensajes", "Idempotencia"] },
+    { "id": "calidad", "title": "Calidad y pruebas", "description": "Tests en el pipeline para que cada entrega no rompa la anterior.", "tags": ["xUnit", "Tests de integración", "Diagnóstico en producción"] },
+    { "id": "cloud", "title": "Cloud y DevOps", "description": "Del commit a producción, y el soporte que viene después.", "tags": ["Azure", "Azure DevOps", "CI/CD", "Docker", "IIS", "Windows / Linux Server"] },
+    { "id": "integraciones", "title": "Integraciones y web", "description": "Conectar sistemas y completar el producto por delante cuando hace falta.", "tags": ["APIs de terceros", "Meta / WhatsApp Business API", "React", "TypeScript", "WordPress", "PHP"] }
+  ],
+  "entries": [
+    {
+      "id": "una-web-con-backend-propio",
+      "title": "Por qué mi web tiene backend propio",
+      "date": "2026-10-12",
+      "category": "Construyendo",
+      "text": "Una web personal podría ser un HTML estático. He preferido tratarla como un proyecto más, con las mismas decisiones que tomaría en un producto real.\n\nLa API está separada en Domain, Application, Infrastructure y API. Los controladores solo traducen HTTP; las reglas viven en servicios y la persistencia en repositorios. El contenido se guarda con un número de revisión, así que dos ediciones simultáneas no se pisan, y esa misma revisión sirve de ETag para que el navegador no descargue lo que ya tiene.\n\nLa sección de GitHub consulta la API pública con caché en memoria. Si GitHub falla o limita las peticiones, se sirve el último resultado válido y no se reintenta en bucle. El frontal y la API viven en repositorios y contenedores distintos, sin usuario root y con sistema de archivos de solo lectura."
+    },
+    {
+      "id": "lo-que-me-llevo-del-campo",
+      "title": "Lo que me llevo del campo al código",
+      "date": "2026-10-11",
+      "category": "Personal",
+      "text": "Juego al fútbol federado en competición y entreno a diario en el gimnasio. Fuera de la pantalla también hay método.\n\nDel campo me llevo la constancia de repetir bien lo básico, la disciplina de prepararse antes de que haga falta y la idea de que el equipo importa más que la jugada individual. En el código se traduce en tests antes de desplegar, en medir antes de optimizar y en dejar el trabajo fácil de entender para quien venga después."
+    }
+  ],
+  "metrics": [
+    { "id": "anios", "value": "+3 años", "label": "desarrollando backend .NET en producción" },
+    { "id": "endpoints", "value": "25+", "label": "endpoints REST diseñados desde cero" },
+    { "id": "rendimiento", "value": "30 s → <1 s", "label": "respuesta tras rediseñar el acceso a datos" },
+    { "id": "registros", "value": "Millones", "label": "de registros en bases SQL Server optimizadas" }
+  ]
+}

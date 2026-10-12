@@ -1,0 +1,9 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+  <ItemGroup>
+    <ProjectReference Include="../Portfolio.Application/Portfolio.Application.csproj" />
+    <ProjectReference Include="../Portfolio.Infrastructure/Portfolio.Infrastructure.csproj" />
+    <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.12" />
+    <Content Include="../seed.json" Link="seed.json" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+    <Content Remove="App_Data/**" />
+  </ItemGroup>
+</Project>

@@ -1,0 +1,57 @@
+using System.Net.Http.Headers;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
+using Portfolio.Application.GitHub;
+using Portfolio.Application.Images;
+using Portfolio.Application.Portfolios;
+using Portfolio.Infrastructure.GitHub;
+using Portfolio.Infrastructure.Images;
+using Portfolio.Infrastructure.Portfolios;
+using Portfolio.Infrastructure.Storage;
+
+namespace Portfolio.Infrastructure;
+
+public static class DependencyInjection
+{
+    public static IServiceCollection AddInfrastructure(this IServiceCollection services,
+        IConfiguration configuration, string defaultDataPath, string seedPath)
+    {
+        services.AddOptions<FileStorageOptions>()
+            .Configure(options => { options.DataPath = defaultDataPath; options.SeedPath = seedPath; })
+            .Bind(configuration.GetSection(FileStorageOptions.SectionName))
+            .Validate(options => !string.IsNullOrWhiteSpace(options.DataPath) && !string.IsNullOrWhiteSpace(options.SeedPath),
+                "Deben configurarse las rutas del contenido y del archivo inicial.")
+            .ValidateOnStart();
+
+        services.AddSingleton<FileStoragePaths>();
+        services.AddSingleton<IPortfolioRepository, JsonPortfolioRepository>();
+        services.AddSingleton<IImageRepository, FileImageRepository>();
+        services.AddHostedService<FileStorageInitializer>();
+        services.AddGitHub(configuration);
+        return services;
+    }
+
+    private static void AddGitHub(this IServiceCollection services, IConfiguration configuration)
+    {
+        services.AddOptions<GitHubClientOptions>()
+            .Bind(configuration.GetSection(GitHubClientOptions.SectionName))
+            .Validate(options => Uri.TryCreate(options.BaseAddress, UriKind.Absolute, out var uri) && uri.Scheme == "https"
+                    && options.Timeout > TimeSpan.Zero,
+                "Revisa la dirección y el tiempo máximo del cliente de GitHub.")
+            .ValidateOnStart();
+
+        services.AddHttpClient(GitHubApiSource.ClientName, (provider, client) =>
+        {
+            var options = provider.GetRequiredService<IOptions<GitHubClientOptions>>().Value;
+            client.BaseAddress = new Uri(options.BaseAddress);
+            client.Timeout = options.Timeout;
+            client.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("diegoespinarodriguez-portfolio", "1.0"));
+            client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/vnd.github+json"));
+            client.DefaultRequestHeaders.Add("X-GitHub-Api-Version", "2022-11-28");
+            if (!string.IsNullOrWhiteSpace(options.Token))
+                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", options.Token);
+        });
+        services.AddSingleton<IGitHubSource, GitHubApiSource>();
+    }
+}

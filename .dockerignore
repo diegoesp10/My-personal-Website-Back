@@ -1,0 +1,17 @@
+.git
+.vs
+.dotnet
+.test-data
+.logs
+publish
+**/bin
+**/obj
+**/wwwroot
+**/App_Data
+**/*.user
+**/.env
+**/.env.*
+scripts
+*.md
+compose.yaml
+*.ps1
