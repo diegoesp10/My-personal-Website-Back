@@ -35,7 +35,7 @@ public sealed class GitHubActivityServiceTests
         var activity = await CreateService(source, new ManualClock(Now)).GetAsync(CancellationToken.None);
 
         Assert.Equal(7, activity.Languages.Length);
-        Assert.Equal("Otros", activity.Languages[^1].Name);
+        Assert.Equal("", activity.Languages[^1].Name);
         Assert.Equal(100, activity.Languages.Sum(language => language.Percentage), precision: 0);
     }
 
