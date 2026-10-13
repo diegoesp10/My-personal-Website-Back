@@ -119,32 +119,83 @@
       "id": "peluqueria-lucia",
       "title": "Peluquería Lucía Espina",
       "category": "Full stack",
-      "description": "Public website and internal management for a hair salon: its own booking system, clients, payments and catalogue, with ASP.NET Core 10 and SQL Server.",
-      "details": "A project in development for the eco-friendly hair salon Peluquería Ecológica Lucía Espina. A single application brings together the salon's public website and a private back office to manage the daily work.\n\nThe dashboard lets the salon look up clients and their history, record visits and services, take payments in cash, by card or both, print receipts and export the selected period to Excel. Price changes in the catalogue keep the amounts of earlier visits.\n\nThe built-in booking system shows availability and lets clients request appointments, prepare proposals and confirm them through private links that expire. It includes an email queue and prepares WhatsApp messages to be sent manually; the client's acceptance is a separate step. SMTP configuration is still pending before sending is switched on.\n\nThe back office requires a password and Microsoft Authenticator, with recovery codes, revocable sessions and CSRF protection. Reviews are verified against receipts and moderated from the dashboard.\n\nLayered architecture: Domain, Application, Infrastructure and Web. ASP.NET Core MVC with Razor views, Entity Framework Core and SQL Server; independent libraries for email and WhatsApp. Program.cs only handles start-up, and dependency composition is organised in Startup.cs and per-feature configuration.",
+      "description": "Public website and management for a hair salon, in production: ASP.NET Core 10 and SQL Server on Azure App Service, released with GitHub Actions and Cloudflare.",
+      "details": "Website and internal management for the eco-friendly hair salon Peluquería Ecológica Lucía Espina, in production at luciapeluqueriaecologica.com. A single application brings together the salon's public website, in Spanish and English, and a private back office for the daily work: clients and their history, visits and payments, a catalogue with prices, receipts, verified reviews and Excel export.\n\nThe public side includes a built-in booking system: it shows availability, takes appointment requests and confirms them through private links that expire. Reviews are verified with the code of a paid receipt and moderated from the dashboard. The back office requires a password and Microsoft Authenticator, with recovery codes, revocable sessions and CSRF protection.\n\nLayered architecture: Domain, Application, Infrastructure and Web. ASP.NET Core MVC with Razor views, Entity Framework Core and SQL Server; independent libraries for email and WhatsApp. The sections below walk through how I took it from the salon's computer to Azure and how each version is released.",
+      "sections": [
+        {
+          "title": "From the salon's computer to the cloud",
+          "text": "The first version ran on the salon's computer, on IIS with a local SQL Server, with the connection string in the Windows credential manager and the keys encrypted with DPAPI. When moving to Azure I did not want to maintain two code bases: the application detects where it runs and takes each piece from the right place. On Windows it keeps using IIS, DPAPI and the credential store; on Azure, the Web App configuration, Key Vault and the managed identity.\n\nThat meant isolating behind contracts everything that depended on the environment: where photos are stored, how keys are encrypted, where the email password comes from or which header carries the visitor's real IP."
+        },
+        {
+          "title": "Azure: App Service, Azure SQL and Key Vault",
+          "text": "The website runs on Azure App Service for Linux with a B1 plan: a small instance, enough for a salon, with Always On so that the first screen of the day does not wait for the application to start. It only accepts HTTPS, FTP is disabled and the start-up command is the .NET 10 assembly itself.\n\nThe database is Azure SQL at the Basic tier (5 DTU), because the free offer is not available in the chosen region, with the Modern_Spanish_CI_AS collation so that searches by name ignore case and accents just like the local SQL Server. Key Vault holds the key with which ASP.NET Core protects its data (Authenticator, appointment links, review codes) and the email secret. Everything lives in Spain Central, in its own resource group, and the cost is around twenty dollars a month."
+        },
+        {
+          "title": "No passwords: managed identity",
+          "text": "No part of the system uses passwords. The Web App has a system-assigned managed identity; the SQL server only accepts Microsoft Entra authentication, and the application signs in with that identity: the connection string carries Authentication=Active Directory Managed Identity and no secret. In the database, that identity exists as an external user created with T-SQL, with just the permissions it needs.\n\nKey Vault works the same way, with role-based permissions: the Web App identity only has the role it needs to use the data protection key. The cookie keys are stored in SQL encrypted with that key, so a copy of the database is useless without Key Vault. The SMTP password arrives as a reference to a Key Vault secret, never as a value in the configuration."
+        },
+        {
+          "title": "Releases with GitHub Actions and OIDC",
+          "text": "The repository is public and the main branch is protected: it only changes through a pull request, with the build and tests green and the owner's approval. Each pull request starts a temporary SQL Server container in GitHub Actions and runs the domain, security and data migration tests.\n\nWhen merging into main, the workflow repeats the tests, waits for the manual approval of the production environment, publishes to App Service and checks that the website answers 200. GitHub signs in to Azure with a federated identity (OIDC): Azure trusts the token GitHub issues for that repository and that environment, so the repository secrets hold only identifiers, no credential to steal or rotate."
+        },
+        {
+          "title": "Migrations with real data",
+          "text": "The database holds the real data of the business, so the Entity Framework Core migrations are always additive: they add columns and indexes and move data before removing anything, and the previous version keeps working with the new schema. The deployment does not apply them: I apply them before publishing, with my Entra account and my IP in the server firewall, so the new code finds the schema ready.\n\nAn automated test rebuilds the previous version's database with data, migrates it and checks that nothing is lost. The catalogue and review photos live in the persistent storage of App Service, which survives every deployment."
+        },
+        {
+          "title": "Domain and DNS with Cloudflare",
+          "text": "The domain is on Cloudflare. First I added the domain and its www as custom domains of the Web App and created on Cloudflare the records Azure asks for to validate them (a verification TXT and the name record), with the proxy off until Azure accepted the domain.\n\nThen I generated a long-lived origin certificate on Cloudflare, converted it to PFX and uploaded it to App Service bound to both names through SNI. With that in place I set the TLS mode to Full (strict): the visitor talks to Cloudflare over HTTPS and Cloudflare talks to Azure over HTTPS with a certificate it verifies. Finally I turned on the proxy on the DNS records."
+        },
+        {
+          "title": "Only Cloudflare reaches the origin",
+          "text": "With the proxy on, the origin must not accept traffic that does not come from Cloudflare: otherwise anyone who discovers the Web App address would bypass the filter. The App Service access restrictions allow only the IP ranges Cloudflare publishes and deny everything else.\n\nFrom then on, the visitor's real IP travels in the CF-Connecting-IP header, which the application uses for lockout after failed sign-ins and for per-IP limits. The header is enabled only once the restriction is in place, because without it anyone could forge it. The allowed hosts list closes the rest."
+        },
+        {
+          "title": "What changes and what does not when publishing",
+          "text": "Some things work the same in the salon and in the cloud. The thermal receipt printer is driven by the salon's browser over USB with WebUSB: the server only builds the ESC/POS receipt, so printing keeps working with the website published on Azure over HTTPS. The time zone is fixed to Europe/Madrid and the culture to es-ES for dates and amounts.\n\nThe ARM templates of the plan and the Web App are in the repository to recreate the environment, and the documentation covers step by step the configuration, the federated identity, the migrations and Cloudflare, so anyone can reproduce the setup."
+        }
+      ],
       "year": "2026",
-      "status": "In development",
-      "url": "",
+      "status": "In production",
+      "url": "https://luciapeluqueriaecologica.com",
       "image": "",
       "tags": [
         ".NET 10",
         "ASP.NET Core MVC",
-        "SQL Server",
-        "Entity Framework Core",
         "Razor",
+        "Entity Framework Core",
+        "SQL Server",
+        "Azure App Service",
+        "Azure SQL",
+        "Key Vault",
+        "Managed identity",
+        "GitHub Actions",
+        "OIDC",
+        "Cloudflare",
         "MFA",
+        "WebUSB",
         "ClosedXML"
       ],
       "art": "salon",
       "featured": false,
       "highlights": [
-        "Management of clients, visits and service history",
-        "Cash, card or split payments, receipts and Excel export",
-        "Built-in booking with availability and appointment confirmation through private links",
-        "Back office with MFA and revocable sessions",
-        "Catalogue shared by the public website and the dashboard; historical prices preserved",
-        "Layered architecture and independent messaging libraries"
+        "In production at luciapeluqueriaecologica.com, in Spanish and English",
+        "Clients, visits, payments, receipts, catalogue and Excel export",
+        "Built-in booking with availability and confirmation through private links",
+        "Back office with MFA, revocable sessions and reviews verified by receipt",
+        "Azure App Service Linux B1, Azure SQL Basic and Key Vault in Spain Central",
+        "No passwords: managed identity for SQL and Key Vault",
+        "GitHub Actions with OIDC federated identity and production approval",
+        "Additive migrations applied before publishing and tested with data",
+        "Cloudflare: DNS, origin certificate, strict TLS and origin restricted to its IPs",
+        "Receipt printer over WebUSB from the salon's browser"
       ],
-      "links": [],
+      "links": [
+        {
+          "label": "Repository",
+          "url": "https://github.com/diegoesp10/PeluqueriaLuciaEspina"
+        }
+      ],
       "experienceId": ""
     },
     {
