@@ -142,6 +142,7 @@ Al primer arranque se copia `seed.json` a `App_Data/portfolio.json`; las edicion
 - El primer despliegue importa `portfolio.json` y `uploads`; los siguientes conservan el contenido del servidor. Las estadísticas de visitas solo existen en el servidor y nunca se sustituyen.
 - En Cloudflare, los nombres de host públicos del túnel (`diegoespinarodriguez.com` y `www`) apuntan a `http://web:8080`. Para que el mapa de visitas tenga ubicación, activa «Add visitor location headers» en *Rules › Transform Rules › Managed Transforms*. No crees registros DNS con la IP del servidor.
 - Para revisar la web publicada sin pasar por Cloudflare: `ssh -L 8080:127.0.0.1:8080 diego-portfolio` y abre <http://127.0.0.1:8080>. Registros: `ssh diego-portfolio "cd portfolio; docker compose logs --tail 100"`.
+- Con CI/CD activo ([docs/CI-CD.md](docs/CI-CD.md)), cada merge a `main` publica la imagen en GHCR y, tras tu aprobación en el entorno `production`, la despliega por SSH. Desde entonces, `Deploy-Server.ps1` queda para el contenido y las copias (`-ReplaceData`, `-Backup`, `-SetTunnelToken`): un despliegue completo con él sube imágenes construidas en tu PC y sustituiría las publicadas desde `main`.
 - Copia de seguridad: `.\scripts\Deploy-Server.ps1 -Backup` descarga el volumen del servidor (contenido, imágenes y visitas) a `App_Data/backups/servidor-<fecha>.tgz`. Hazla antes de cada `-ReplaceData`.
 
 ## Estructura

@@ -59,6 +59,7 @@ Get-Content -LiteralPath $portfolioKeyPath -Raw |
 ```
 
 Los demás secretos se introducen en la interfaz de GitHub o con gh secret set, sin escribir sus valores en comandos versionados.
+Desde Windows, `scripts/Set-DeploySecrets.ps1` del backend carga los cuatro (SSH_HOST, SSH_USER, SSH_KNOWN_HOSTS y SSH_PRIVATE_KEY) en los dos repositorios. Los lee del alias SSH `diego-portfolio`, de `~/.ssh/known_hosts` y de la clave `~/.ssh/portfolio-actions`, sin mostrarlos. En la VM, esa clave está autorizada con la opción `restrict`: sin terminal ni reenvío de puertos.
 Para SSH_KNOWN_HOSTS, obtener la clave pública del host y comprobar su huella por una conexión ya confiable o desde la consola de Azure.
 Con puerto distinto de 22, la entrada debe usar [host]:puerto.
 La pipeline no acepta automáticamente una clave de host obtenida mediante ssh-keyscan sin verificar.
