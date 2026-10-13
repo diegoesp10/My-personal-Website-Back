@@ -7,9 +7,10 @@ using Portfolio.Domain.Portfolios;
 namespace Portfolio.Application.Seo;
 
 /// <summary>
-/// Title, description, canonical address, sharing image and schema.org data of each frontend route, built from the
-/// content. Nginx inserts them in the HTML of every page (SSI), so crawlers that do not run JavaScript read them, and
-/// the frontend applies them when navigating between pages.
+/// Title, description, canonical address, language alternates, sharing image and schema.org data of each frontend
+/// route, built from the content of the route's language (see <see cref="SiteRoutes"/>). Nginx inserts them in the HTML
+/// of every page (SSI), so crawlers that do not run JavaScript read them, and the frontend applies them when navigating
+/// between pages.
 /// </summary>
 public sealed partial class SeoService(IPortfolioRepository repository) : ISeoService
 {
@@ -18,28 +19,38 @@ public sealed partial class SeoService(IPortfolioRepository repository) : ISeoSe
     // Static sections of the React frontend. Keep in sync with its router and with SitemapService.
     private static readonly Dictionary<string, SiteSection> Sections = new(StringComparer.Ordinal)
     {
-        ["/proyectos"] = new("Proyectos", "CollectionPage", profile =>
-            $"Proyectos de {profile.Name}: backends .NET, aplicaciones full stack y webs en producción, con enlaces al código."),
-        ["/experiencia"] = new("Experiencia y CV", "WebPage", profile =>
-            $"CV online de {profile.Name}: {Plain(profile.Role)}. Experiencia, competencias técnicas y formación."),
-        ["/github"] = new("GitHub", "WebPage", profile =>
-            $"Repositorios públicos, lenguajes y commits recientes de {profile.Name} en GitHub."),
-        ["/visitas"] = new("Visitas", "WebPage", profile =>
-            $"Mapa en directo de las visitas a la web de {profile.Name}: países y ciudades, sin cookies ni direcciones IP."),
-        ["/sobre-mi"] = new("Sobre mí", "AboutPage", profile => FirstParagraph(profile.Bio)),
-        ["/diario"] = new("Diario", "CollectionPage", profile =>
-            $"Notas de {profile.Name} sobre lo que construye, lo que aprende y lo que vive fuera del código."),
-        ["/contacto"] = new("Contacto", "ContactPage", profile =>
-            $"Contacto profesional de {profile.Name}, {Plain(profile.Role)}. Correo, teléfono y LinkedIn."),
+        ["/proyectos"] = new(new("Proyectos", "Projects"), "CollectionPage", profile => new(
+            $"Proyectos de {profile.Name}: backends .NET, aplicaciones full stack y webs en producción, con enlaces al código.",
+            $"Projects by {profile.Name}: .NET backends, full stack applications and live websites, with links to the code.")),
+        ["/experiencia"] = new(new("Experiencia y CV", "Experience and CV"), "WebPage", profile => new(
+            $"CV online de {profile.Name}: {Plain(profile.Role)}. Experiencia, competencias técnicas y formación.",
+            $"Online CV of {profile.Name}: {Plain(profile.Role)}. Experience, technical skills and education.")),
+        ["/github"] = new(new("GitHub", "GitHub"), "WebPage", profile => new(
+            $"Repositorios públicos, lenguajes y commits recientes de {profile.Name} en GitHub.",
+            $"Public repositories, languages and recent commits by {profile.Name} on GitHub.")),
+        ["/visitas"] = new(new("Visitas", "Visits"), "WebPage", profile => new(
+            $"Mapa en directo de las visitas a la web de {profile.Name}: países y ciudades, sin cookies ni direcciones IP.",
+            $"Live map of visits to the website of {profile.Name}: countries and cities, with no cookies or IP addresses.")),
+        ["/sobre-mi"] = new(new("Sobre mí", "About me"), "AboutPage", profile => Localized.Same(FirstParagraph(profile.Bio))),
+        ["/diario"] = new(new("Diario", "Journal"), "CollectionPage", profile => new(
+            $"Notas de {profile.Name} sobre lo que construye, lo que aprende y lo que vive fuera del código.",
+            $"Notes by {profile.Name} on building software, learning and life outside code.")),
+        ["/contacto"] = new(new("Contacto", "Contact"), "ContactPage", profile => new(
+            $"Contacto profesional de {profile.Name}, {Plain(profile.Role)}. Correo, teléfono y LinkedIn.",
+            $"Professional contact for {profile.Name}, {Plain(profile.Role)}. Email, phone and LinkedIn.")),
         // Legal texts. They live in the frontend (src/legal/documents.tsx), so their descriptions are fixed here.
-        ["/legal/aviso-legal"] = new("Aviso legal", "WebPage", _ =>
-            "Quién está detrás de esta web y en qué condiciones puedes usar lo que publica."),
-        ["/legal/privacidad"] = new("Política de privacidad", "WebPage", _ =>
-            "Qué datos llegan a esta web, para qué se usan y cómo ejercer tus derechos según el RGPD."),
-        ["/legal/cookies"] = new("Política de cookies", "WebPage", _ =>
-            "Esta web no usa cookies de seguimiento ni de publicidad. Esto es todo lo que guarda en tu navegador."),
-        ["/legal/terminos"] = new("Términos de uso", "WebPage", _ =>
-            "Las condiciones para usar esta web: qué puedes hacer y qué no, y qué puedes esperar de ella."),
+        ["/legal/aviso-legal"] = new(new("Aviso legal", "Legal notice"), "WebPage", _ => new(
+            "Quién está detrás de esta web y en qué condiciones puedes usar lo que publica.",
+            "Who is behind this website and the terms under which you may use what it publishes.")),
+        ["/legal/privacidad"] = new(new("Política de privacidad", "Privacy policy"), "WebPage", _ => new(
+            "Qué datos llegan a esta web, para qué se usan y cómo ejercer tus derechos según el RGPD.",
+            "What data reaches this website, what it is used for and how to exercise your rights under the GDPR.")),
+        ["/legal/cookies"] = new(new("Política de cookies", "Cookie policy"), "WebPage", _ => new(
+            "Esta web no usa cookies de seguimiento ni de publicidad. Esto es todo lo que guarda en tu navegador.",
+            "This website uses no tracking or advertising cookies. This is everything it stores in your browser.")),
+        ["/legal/terminos"] = new(new("Términos de uso", "Terms of use"), "WebPage", _ => new(
+            "Las condiciones para usar esta web: qué puedes hacer y qué no, y qué puedes esperar de ella.",
+            "The terms for using this website: what you can and cannot do, and what you can expect from it.")),
     };
 
     // Routes that the frontend redirects: they share the metadata and canonical address of their target.
@@ -49,31 +60,37 @@ public sealed partial class SeoService(IPortfolioRepository repository) : ISeoSe
     };
 
     // Utility pages of the frontend that must never be indexed.
-    private static readonly Dictionary<string, string> Utilities = new(StringComparer.Ordinal)
+    private static readonly Dictionary<string, Localized> Utilities = new(StringComparer.Ordinal)
     {
-        ["/editor"] = "Editor",
-        ["/error"] = "Error",
+        ["/editor"] = Localized.Same("Editor"),
+        ["/error"] = Localized.Same("Error"),
     };
+
+    private static readonly Localized NotFound = new("No encontrado", "Not found");
+    private static readonly Localized HomeName = new("Inicio", "Home");
 
     public async Task<PageMetadata> GetPageAsync(string path, SiteAddress site, CancellationToken cancellationToken)
     {
-        var portfolio = await repository.GetAsync(cancellationToken);
-        var pages = new PageBuilder(portfolio, site);
-        var route = NormalizePath(path);
+        var (language, route) = SiteRoutes.Split(NormalizePath(path));
         if (Redirects.TryGetValue(route, out var target)) route = target;
+
+        // Every language is read: alternates only point to languages where the page exists.
+        var contents = new Dictionary<string, PortfolioData>(StringComparer.Ordinal);
+        foreach (var code in ContentLanguage.All) contents[code] = await repository.GetAsync(code, cancellationToken);
+        var pages = new PageBuilder(contents, language, site);
 
         if (route == "/") return pages.Home();
         if (Sections.TryGetValue(route, out var section)) return pages.Section(route, section);
 
         var segments = route.Split('/', StringSplitOptions.RemoveEmptyEntries);
         if (segments is ["proyectos", var projectId]
-            && portfolio.Projects.FirstOrDefault(project => project.Id == projectId) is { } found)
+            && contents[language].Projects.FirstOrDefault(project => project.Id == projectId) is { } found)
             return pages.Project(found);
         if (segments is ["diario", var entryId]
-            && portfolio.Entries.FirstOrDefault(entry => entry.Id == entryId) is { } entry)
+            && contents[language].Entries.FirstOrDefault(entry => entry.Id == entryId) is { } entry)
             return pages.Entry(entry);
 
-        return pages.NotIndexed(Utilities.GetValueOrDefault(route, "No encontrado"));
+        return pages.NotIndexed(Utilities.GetValueOrDefault(route, NotFound).In(language));
     }
 
     /// <summary>Path without query, fragment or trailing slash, always starting with "/".</summary>
@@ -106,14 +123,22 @@ public sealed partial class SeoService(IPortfolioRepository repository) : ISeoSe
     [GeneratedRegex("^/uploads/[a-f0-9]+\\.(png|jpg|webp)$")]
     private static partial Regex UploadedImage();
 
-    private sealed record SiteSection(string Title, string Type, Func<Profile, string> Describe);
-
-    private sealed class PageBuilder(PortfolioData portfolio, SiteAddress site)
+    /// <summary>A fixed text of the site in each language.</summary>
+    private sealed record Localized(string Spanish, string English)
     {
-        private readonly Profile profile = portfolio.Profile;
+        public string In(string language) => language == ContentLanguage.English ? English : Spanish;
+        public static Localized Same(string text) => new(text, text);
+    }
+
+    private sealed record SiteSection(Localized Title, string Type, Func<Profile, Localized> Describe);
+
+    private sealed class PageBuilder(IReadOnlyDictionary<string, PortfolioData> contents, string language, SiteAddress site)
+    {
+        private readonly PortfolioData portfolio = contents[language];
+        private readonly Profile profile = contents[language].Profile;
         private readonly string root = site.BaseUrl.TrimEnd('/');
 
-        private string HomeUrl => root + "/";
+        private string HomeUrl => Url("/");
         private string PersonId => root + "/#person";
         private string WebSiteId => root + "/#website";
         private string DefaultImage => root + site.DefaultImage;
@@ -124,22 +149,24 @@ public sealed partial class SeoService(IPortfolioRepository repository) : ISeoSe
             var description = Summarize(profile.Intro);
             var page = WebPage("ProfilePage", HomeUrl, title, description);
             page["mainEntity"] = Reference(PersonId);
-            return Create(title, description, HomeUrl, "website", Graph(page));
+            return Create(title, description, "/", "website", Graph(page), ContentLanguage.All);
         }
 
         public PageMetadata Section(string route, SiteSection section)
         {
-            var url = root + route;
-            var title = $"{section.Title} · {profile.Name}";
-            var description = Summarize(section.Describe(profile));
+            var url = Url(route);
+            var name = section.Title.In(language);
+            var title = $"{name} · {profile.Name}";
+            var description = Summarize(section.Describe(profile).In(language));
             var page = WebPage(section.Type, url, title, description);
             if (section.Type is "AboutPage" or "ContactPage") page["mainEntity"] = Reference(PersonId);
-            return Create(title, description, url, "website", Graph(page, Breadcrumbs((section.Title, url))));
+            return Create(title, description, route, "website", Graph(page, Breadcrumbs((name, url))), ContentLanguage.All);
         }
 
         public PageMetadata Project(Project project)
         {
-            var url = root + "/proyectos/" + Uri.EscapeDataString(project.Id);
+            var route = "/proyectos/" + Uri.EscapeDataString(project.Id);
+            var url = Url(route);
             var title = $"{project.Title} · {profile.Name}";
             var description = Summarize(project.Description);
             var image = ImageUrl(project.Image);
@@ -152,20 +179,23 @@ public sealed partial class SeoService(IPortfolioRepository repository) : ISeoSe
                 ["url"] = url,
                 ["author"] = Reference(PersonId),
                 ["image"] = image ?? DefaultImage,
-                ["inLanguage"] = "es-ES",
+                ["inLanguage"] = SiteRoutes.Tag(language),
             };
             if (project.Tags.Length > 0) work["keywords"] = string.Join(", ", project.Tags);
             if (project.Year.Length == 4 && project.Year.All(char.IsAsciiDigit)) work["dateCreated"] = project.Year;
             var page = WebPage("WebPage", url, title, description);
             page["mainEntity"] = Reference(url + "#work");
-            var metadata = Create(title, description, url, "article",
-                Graph(page, work, Breadcrumbs(("Proyectos", root + "/proyectos"), (project.Title, url))));
+            var projects = Sections["/proyectos"].Title.In(language);
+            var languages = Having(content => content.Projects.Any(item => item.Id == project.Id));
+            var metadata = Create(title, description, route, "article",
+                Graph(page, work, Breadcrumbs((projects, Url("/proyectos")), (project.Title, url))), languages);
             return image is null ? metadata : metadata with { Image = image, ImageAlt = project.Title };
         }
 
         public PageMetadata Entry(Entry entry)
         {
-            var url = root + "/diario/" + Uri.EscapeDataString(entry.Id);
+            var route = "/diario/" + Uri.EscapeDataString(entry.Id);
+            var url = Url(route);
             var title = $"{entry.Title} · {profile.Name}";
             var description = Summarize(FirstParagraph(entry.Text));
             DateOnly? published = DateOnly.TryParseExact(entry.Date, "yyyy-MM-dd", CultureInfo.InvariantCulture,
@@ -181,22 +211,43 @@ public sealed partial class SeoService(IPortfolioRepository repository) : ISeoSe
                 ["publisher"] = Reference(PersonId),
                 ["mainEntityOfPage"] = Reference(url + "#page"),
                 ["image"] = DefaultImage,
-                ["inLanguage"] = "es-ES",
+                ["inLanguage"] = SiteRoutes.Tag(language),
             };
             if (published is { } day) article["datePublished"] = day.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
             if (entry.Category.Length > 0) article["articleSection"] = entry.Category;
-            var metadata = Create(title, description, url, "article",
+            var journal = Sections["/diario"].Title.In(language);
+            var languages = Having(content => content.Entries.Any(item => item.Id == entry.Id));
+            var metadata = Create(title, description, route, "article",
                 Graph(WebPage("WebPage", url, title, description), article,
-                    Breadcrumbs(("Diario", root + "/diario"), (entry.Title, url))));
+                    Breadcrumbs((journal, Url("/diario")), (entry.Title, url))), languages);
             return metadata with { Published = published };
         }
 
         public PageMetadata NotIndexed(string name)
-            => Create($"{name} · {profile.Name}", Summarize(profile.Intro), null, "website", null) with { Indexable = false };
+            => Create($"{name} · {profile.Name}", Summarize(profile.Intro), null, "website", null, []) with
+            {
+                Indexable = false,
+            };
 
-        private PageMetadata Create(string title, string description, string? url, string type, JsonObject? data)
-            => new(title, description, url, DefaultImage, $"{profile.Name}, {Plain(profile.Role)}", type, true,
-                profile.Name, null, data);
+        private PageMetadata Create(string title, string description, string? route, string type, JsonObject? data,
+            IReadOnlyList<string> languages)
+            => new(title, description, route is null ? null : Url(route), DefaultImage,
+                $"{profile.Name}, {Plain(profile.Role)}", type, true, profile.Name, null, data,
+                language, SiteRoutes.Locale(language), route is null ? [] : Alternates(route, languages));
+
+        private string Url(string route) => root + SiteRoutes.Localize(language, route);
+
+        private string[] Having(Func<PortfolioData, bool> exists)
+            => [.. ContentLanguage.All.Where(code => exists(contents[code]))];
+
+        // The page in each language it exists in; x-default is the Spanish one, or the first available.
+        private List<PageAlternate> Alternates(string route, IReadOnlyList<string> languages)
+        {
+            var alternates = languages.Select(code => new PageAlternate(code, root + SiteRoutes.Localize(code, route))).ToList();
+            var fallback = languages.Contains(ContentLanguage.Default) ? ContentLanguage.Default : languages[0];
+            alternates.Add(new PageAlternate("x-default", root + SiteRoutes.Localize(fallback, route)));
+            return alternates;
+        }
 
         private JsonObject Graph(params JsonObject[] nodes)
             => new()
@@ -239,9 +290,9 @@ public sealed partial class SeoService(IPortfolioRepository repository) : ISeoSe
         {
             ["@type"] = "WebSite",
             ["@id"] = WebSiteId,
-            ["url"] = HomeUrl,
+            ["url"] = root + "/",
             ["name"] = profile.Name,
-            ["inLanguage"] = "es-ES",
+            ["inLanguage"] = Strings(ContentLanguage.All.Select(SiteRoutes.Tag)),
             ["publisher"] = Reference(PersonId),
         };
 
@@ -252,14 +303,14 @@ public sealed partial class SeoService(IPortfolioRepository repository) : ISeoSe
             ["url"] = url,
             ["name"] = title,
             ["description"] = description,
-            ["inLanguage"] = "es-ES",
+            ["inLanguage"] = SiteRoutes.Tag(language),
             ["isPartOf"] = Reference(WebSiteId),
         };
 
         private JsonObject Breadcrumbs(params (string Name, string Url)[] trail)
         {
             var items = new JsonArray();
-            foreach (var (name, url) in trail.Prepend(("Inicio", HomeUrl)))
+            foreach (var (name, url) in trail.Prepend((HomeName.In(language), HomeUrl)))
                 items.Add(new JsonObject
                 {
                     ["@type"] = "ListItem",

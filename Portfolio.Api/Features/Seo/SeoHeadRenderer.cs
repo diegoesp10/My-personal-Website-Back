@@ -26,9 +26,14 @@ public static class SeoHeadRenderer
             html.Append("<link rel=\"canonical\" href=\"").Append(Html.Encode(url)).Append("\" data-seo>\n");
         else
             Meta(html, "name", "robots", "noindex");
+        foreach (var alternate in page.Alternates)
+            html.Append("<link rel=\"alternate\" hreflang=\"").Append(Html.Encode(alternate.Language))
+                .Append("\" href=\"").Append(Html.Encode(alternate.Url)).Append("\" data-seo>\n");
         Meta(html, "property", "og:type", page.Type);
         Meta(html, "property", "og:site_name", page.SiteName);
-        Meta(html, "property", "og:locale", "es_ES");
+        Meta(html, "property", "og:locale", page.Locale);
+        foreach (var other in page.Alternates.Where(item => item.Language != page.Language && item.Language != "x-default"))
+            Meta(html, "property", "og:locale:alternate", SiteRoutes.Locale(other.Language));
         Meta(html, "property", "og:title", page.Title);
         Meta(html, "property", "og:description", page.Description);
         if (page.Url is { } address) Meta(html, "property", "og:url", address);
