@@ -180,3 +180,5 @@ El workflow `.github/workflows/ci-cd.yml` comprueba las PR y publica una imagen 
 `Portfolio.Errors` centraliza los códigos y mensajes. La API devuelve Problem Details con correlación y mantiene un historial privado en el volumen persistente. El editor local incorpora una pestaña Errores con consulta protegida y mensajes en es/en; Production no permite acceder al historial por HTTP.
 
 `language` se envía en el cuerpo JSON, en GET como query y en multipart como campo. Español es el valor predeterminado. Las respuestas de los controladores añaden mensajes de operación localizados; el contenido editorial conserva su idioma original. Contratos, retención y pruebas en [docs/ERRORS-AND-LANGUAGE.md](docs/ERRORS-AND-LANGUAGE.md).
+
+La ficha del proyecto `portfolio` incluye diez apartados sobre arquitectura, VM Ubuntu en Azure, Docker Compose, Cloudflare Tunnel, integración continua, protección de main, aprobación de producción, imágenes en GHCR, publicación SSH y recuperación. `project.sections` es una colección aditiva y editable de `{ title, text }`, vacía por defecto en contenido anterior.

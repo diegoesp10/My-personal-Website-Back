@@ -182,8 +182,8 @@
       "id": "portfolio",
       "title": "diegoespinarodriguez.com",
       "category": "Full stack",
-      "description": "Mi web personal: una API en ASP.NET Core 10 por capas y un frontal React, cada uno en su contenedor.",
-      "details": "Esta web también es un proyecto. El backend es una API en ASP.NET Core 10 organizada en Domain, Application, Infrastructure y API, con inyección de dependencias explícita, validación centralizada, control de concurrencia por revisión y caché HTTP con ETag.\n\nLa sección de GitHub consulta la API pública con caché en memoria y modo degradado: si GitHub no responde, se sirve el último resultado válido. El frontal es React 19 con TypeScript y Vite, servido por Nginx. Los dos contenedores se ejecutan sin usuario root y con sistema de archivos de solo lectura.",
+      "description": "Diseño, desarrollo y publicación de mi portfolio: .NET 10 y React en una VM Linux de Azure, con Docker, CI/CD y despliegues por SSH.",
+      "details": "Una web personal también puede demostrar cómo trabajo: desde la separación de responsabilidades en el código hasta la entrega y operación del software en producción. Aquí reúno backend, frontend, infraestructura y automatización en un sistema que desarrollo y mantengo.\n\nHe organizado el proyecto en dos repositorios y dos imágenes Docker, desplegadas en la misma máquina virtual de Azure. La publicación conecta GitHub Actions, GHCR, SSH y Docker Compose, con comprobaciones previas, main protegida, aprobación de producción y recuperación de la imagen anterior si falla el despliegue.",
       "year": "2026",
       "status": "En evolución",
       "url": "",
@@ -191,19 +191,31 @@
       "tags": [
         ".NET 10",
         "ASP.NET Core",
-        "React",
+        "React 19",
         "TypeScript",
-        "Docker",
-        "Nginx"
+        "Azure VM",
+        "Linux",
+        "Docker Compose",
+        "GitHub Actions",
+        "CI/CD",
+        "GHCR",
+        "SSH",
+        "Nginx",
+        "Cloudflare Tunnel"
       ],
       "art": "orange",
       "featured": false,
       "highlights": [
-        "Arquitectura por capas con contratos explícitos",
-        "Integración con la API de GitHub con caché y modo degradado",
-        "ETag, límite de peticiones y cabeceras de seguridad",
-        "Contenedores sin root y de solo lectura",
-        "Editor local con control de concurrencia"
+        "Arquitectura por capas e inyección de dependencias explícita",
+        "Frontend y backend en repositorios e imágenes independientes",
+        "VM Ubuntu en Azure y stack coordinado con Docker Compose",
+        "Integración continua en PR y publicación automática al actualizar main",
+        "main protegida y aprobación antes del despliegue de producción",
+        "Imágenes identificadas por commit y desplegadas por digest inmutable",
+        "Credenciales SSH en secretos de GitHub y tokens temporales de registro",
+        "Bloqueo compartido, comprobaciones HTTP y recuperación de la imagen anterior",
+        "Volumen persistente para contenido, imágenes, estadísticas y errores",
+        "Catálogo de errores, correlación e historial privado con mensajes en español e inglés"
       ],
       "links": [
         {
@@ -213,6 +225,48 @@
         {
           "label": "Repositorio backend",
           "url": "https://github.com/diegoesp10/My-personal-Website-Back"
+        }
+      ],
+      "sections": [
+        {
+          "title": "Diseño y arquitectura de extremo a extremo",
+          "text": "He construido y desplegado esta web como un proyecto completo: diseño de la experiencia, frontend, API, persistencia y operación en producción. Mantengo el frontend y el backend en repositorios independientes, con sus propios Dockerfiles, comprobaciones y ciclos de publicación.\n\nLa API utiliza ASP.NET Core 10 y separa Domain, Application, Infrastructure y API. Program.cs se ocupa del arranque; Startup.cs compone servicios y middleware mediante extensiones explícitas. Las reglas de negocio, la validación, los repositorios y los clientes externos se conectan mediante contratos e inyección de dependencias. El frontend utiliza React 19, TypeScript y Vite y se sirve con Nginx."
+        },
+        {
+          "title": "Azure: una VM Linux como plataforma de ejecución",
+          "text": "La producción está alojada en una máquina virtual Ubuntu de Azure, de tamaño B2ats_v2 y arquitectura x86-64. He preparado el entorno Linux para ejecutar Docker y Docker Compose y mantener el stack del proyecto en una carpeta de despliegue dedicada.\n\nEn la misma VM conviven los contenedores de la API, la web y Cloudflare Tunnel. El frontend y el backend son dos imágenes independientes, coordinadas por Compose y una red Docker compartida. Esto me permite actualizar un servicio sin reconstruir el otro y conservar los datos entre versiones."
+        },
+        {
+          "title": "Contenedores y persistencia",
+          "text": "El Dockerfile del backend compila y publica la API en una etapa de construcción con el SDK de .NET 10. La imagen final utiliza el runtime de ASP.NET Core sobre Alpine y ejecuta la aplicación con un usuario sin privilegios. En el frontend, otra construcción por etapas genera los archivos de React y los entrega a Nginx.\n\nLos servicios api y web se ejecutan con sistema de archivos de solo lectura, sin capacidades Linux adicionales y con no-new-privileges. La comunicación interna pasa por diego-portfolio-net. El volumen diego-portfolio-data conserva el contenido del portfolio, las imágenes subidas, las estadísticas y el historial de errores: estos archivos no se empaquetan en las imágenes ni se sustituyen al publicar código."
+        },
+        {
+          "title": "Dominio y acceso mediante Cloudflare Tunnel",
+          "text": "Cloudflare gestiona diegoespinarodriguez.com y su variante www. El contenedor cloudflared establece el túnel saliente y dirige el tráfico hacia web:8080 dentro de la red Docker. Nginx sirve React y envía las peticiones de la API al servicio api.\n\nLa web del servidor solo se publica en el loopback de la VM; las visitas públicas llegan a través del túnel. SSH se utiliza para administración y publicación. El token del túnel permanece en la configuración privada del servidor. Las cabeceras del proxy permiten identificar el cliente para el límite de peticiones y alimentar las estadísticas agregadas."
+        },
+        {
+          "title": "Un proceso de integración continua por repositorio",
+          "text": "Cada repositorio contiene su workflow de GitHub Actions. Las pull requests dirigidas a main ejecutan las comprobaciones antes del merge. Un cambio incorporado a main inicia automáticamente la misma validación y, si pasa, la construcción y publicación de la imagen. También existe una ejecución manual para operaciones controladas.\n\nEn el backend se restauran las dependencias, se compila .NET y se ejecutan pruebas unitarias e integración contra una API real con datos aislados. En el frontend se instalan las dependencias con npm ci y se verifican TypeScript y la compilación de Vite. Ambos workflows comprueban los scripts de despliegue y sus escenarios de recuperación. Las acciones externas se fijan a commits concretos para controlar qué versión se ejecuta."
+        },
+        {
+          "title": "main protegida y aprobación de producción",
+          "text": "Trabajo en develop y llevo los cambios a main mediante pull request. Las reglas de GitHub exigen las comprobaciones del repositorio antes del merge y bloquean el push directo, el borrado de main y la reescritura de su historial. Un hook local añade una confirmación antes del push y rechaza los envíos directos a main.\n\nTras el merge, la pipeline publica el artefacto, pero el job de despliegue espera mi aprobación en el entorno production. El entorno limita las publicaciones a main y requiere revisor sin permitir saltarse la protección como administrador. Antes de desplegar, un script comprueba que la aprobación está configurada y que el commit aprobado sigue siendo el actual main. Son dos decisiones separadas: integrar el cambio y autorizar su entrada en producción."
+        },
+        {
+          "title": "Imágenes trazables en GitHub Container Registry",
+          "text": "Las imágenes se construyen para linux/amd64 y se publican en GitHub Container Registry, una para api y otra para web. Cada versión incorpora el SHA del commit y etiquetas que identifican su repositorio y revisión.\n\nEl despliegue descarga la imagen por su digest SHA-256 inmutable. Así, la VM ejecuta el artefacto generado para ese commit y se puede identificar qué versión ha llegado a producción. La etiqueta local de Compose se actualiza después de descargar el digest; no se compila en el servidor ni se descarga una rama que pueda cambiar durante el despliegue."
+        },
+        {
+          "title": "Publicación por SSH y gestión de credenciales",
+          "text": "La conexión de publicación utiliza una clave SSH dedicada y la verificación estricta de la clave del host. El host, el usuario, la clave privada y known_hosts están en los secretos del entorno production de GitHub; sus valores no forman parte del repositorio. La clave pública correspondiente se autoriza en la VM.\n\nGitHub Actions proporciona un GITHUB_TOKEN temporal con permisos de escritura en paquetes para publicar y de lectura para desplegar. La descarga en la VM recibe el token por la entrada estándar de SSH y docker login usa password-stdin. Las credenciales temporales del runner y de Docker se eliminan al finalizar. El token del túnel y la configuración privada del servidor se conservan aparte."
+        },
+        {
+          "title": "Despliegue, verificaciones y recuperación",
+          "text": "Los dos repositorios adquieren el mismo bloqueo en la VM para evitar que sus despliegues modifiquen el stack simultáneamente. El script valida el servicio, el repositorio, el commit y la referencia de la imagen antes de continuar. Guarda la imagen anterior y recrea únicamente api o web con Docker Compose, manteniendo los volúmenes y el resto del stack.\n\nDespués espera a que el contenedor esté saludable y verifica tanto /healthz como /api/health a través de Nginx. Si la actualización falla después de cambiar la imagen, intenta restaurar la versión anterior, recrea el servicio y repite las comprobaciones. La ejecución queda marcada como fallida para poder revisarla. Cada despliegue completado registra commit, digest, fecha y referencia de la imagen anterior."
+        },
+        {
+          "title": "Contenido, observabilidad y mantenimiento",
+          "text": "El contenido profesional se administra desde un editor disponible únicamente en Development y desde el equipo local. La API valida los datos y utiliza una revisión para detectar ediciones concurrentes; ETag permite revalidar las lecturas. La integración con GitHub incorpora caché y un resultado degradado cuando el servicio externo no responde.\n\nPortfolio.Errors centraliza códigos y mensajes de error. La API devuelve respuestas de error estructuradas con estado HTTP, idioma y correlación; el historial privado persiste en el volumen y se consulta desde el editor protegido. Los mensajes de operación y error admiten español e inglés mediante language, sin traducir automáticamente el contenido editorial.\n\nSeparo la publicación de código del mantenimiento del contenido. El volumen se conserva al actualizar imágenes y tiene su propio proceso de copia de seguridad. Antes de sustituir datos del servidor preparo una copia y reviso la operación. La persistencia JSON está diseñada para una sola instancia; una evolución a varias réplicas requeriría trasladar esos contratos a una base de datos y almacenamiento compartido."
         }
       ]
     },

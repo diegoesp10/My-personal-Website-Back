@@ -25,6 +25,15 @@ public sealed class PortfolioValidatorTests
         Assert.Contains(seed.Projects, project => project.Featured);
     }
 
+    [Fact]
+    public void Rejects_incomplete_case_study_sections_and_accepts_legacy_projects()
+    {
+        var seed = LoadSeed();
+        var project = seed.Projects[0] with { Sections = [new ProjectSection("", "Text")] };
+        Assert.Equal("Revisa los títulos y textos de las secciones del proyecto.", _validator.Validate(seed with { Projects = [project] }));
+        Assert.Null(_validator.Validate(seed with { Projects = [seed.Projects[0] with { Sections = [] }] }));
+    }
+
     [Theory]
     [InlineData("2025/10", "")]
     [InlineData("2025-13", "")]

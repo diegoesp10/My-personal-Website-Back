@@ -7,6 +7,7 @@ public sealed record Project
     public string Category { get; init; } = "";
     public string Description { get; init; } = "";
     public string Details { get; init; } = "";
+    public ProjectSection[] Sections { get; init; } = [];
     public string Year { get; init; } = "";
     public string Status { get; init; } = "";
     public string Url { get; init; } = "";

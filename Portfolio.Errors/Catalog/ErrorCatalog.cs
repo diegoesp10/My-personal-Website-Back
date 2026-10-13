@@ -43,6 +43,7 @@ public static class ErrorCatalog
         new("image.required", "Selecciona una imagen.", "Select an image."),
         new("image.size", "La imagen debe ocupar entre 1 byte y 8 MB.", "The image must be between 1 byte and 8 MB."),
         new("image.format", "Formato no permitido. Utiliza PNG, JPEG o WebP.", "Unsupported format. Use PNG, JPEG or WebP."),
+        new("portfolio.sections", "Revisa los títulos y textos de las secciones del proyecto.", "Check the titles and text of the project sections."),
     ];
     private static readonly IReadOnlyDictionary<string, ErrorDefinition> ByCode =
         Definitions.ToDictionary(error => error.Code, StringComparer.Ordinal);

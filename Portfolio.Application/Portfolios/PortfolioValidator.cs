@@ -33,6 +33,10 @@ public sealed class PortfolioValidator : IPortfolioValidator
         if (HasInvalidText(document.RootElement))
             return ErrorCatalog.Get("portfolio.text").Message();
 
+        if (portfolio.Projects.Any(project => project.Sections.Length > MaximumListItems
+            || project.Sections.Any(section => string.IsNullOrWhiteSpace(section.Title) || string.IsNullOrWhiteSpace(section.Text))))
+            return ErrorCatalog.Get("portfolio.sections").Message();
+
         return ValidateIdentifiers(portfolio)
             ?? ValidateItems(portfolio)
             ?? ValidateExperience(portfolio)
