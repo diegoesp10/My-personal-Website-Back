@@ -2,6 +2,7 @@
   <Project Path="Portfolio.Api/Portfolio.Api.csproj" />
   <Project Path="Portfolio.Application/Portfolio.Application.csproj" />
   <Project Path="Portfolio.Domain/Portfolio.Domain.csproj" />
+  <Project Path="Portfolio.Errors/Portfolio.Errors.csproj" />
   <Project Path="Portfolio.Infrastructure/Portfolio.Infrastructure.csproj" />
   <Folder Name="/tests/">
     <Project Path="Portfolio.Tests/Portfolio.Tests.csproj" />

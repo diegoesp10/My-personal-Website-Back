@@ -65,6 +65,8 @@ try {
   const sitemapXml = await sitemap.text();
   assert.match(sitemapXml, /<loc>https:\/\/diegoespinarodriguez\.com\/experiencia<\/loc>/);
   assert.ok(sitemapXml.includes(`/proyectos/${original.projects[0].id}</loc>`));
+  assert.match(sitemapXml, /<loc>https:\/\/diegoespinarodriguez\.com\/legal\/privacidad<\/loc>/);
+  assert.doesNotMatch(sitemapXml, /\/error<\/loc>/);
   assert.equal((await fetch(`${base}/api/openapi/v1.json`)).status, 200);
 
   // Write protection of the local editor.
@@ -139,7 +141,13 @@ try {
   assert.ok(!jsonLd.includes('<'));
   assert.equal(JSON.parse(jsonLd)['@graph'].find((node) => node['@type'] === 'CreativeWork').name, tricky.title);
   assert.match(await (await fetch(`${base}/api/seo/head?path=/no-existe`)).text(), /<meta name="robots" content="noindex" data-seo>/);
-  const home = await (await fetch(`${base}/api/seo/page?path=/`)).json();
+  const legal = await (await fetch(`${base}/api/seo/head?path=/legal/privacidad`)).text();
+  assert.ok(legal.includes('<link rel="canonical" href="https://diegoespinarodriguez.com/legal/privacidad" data-seo>'));
+  assert.ok(!legal.includes('noindex'));
+  const errorPage = await (await fetch(`${base}/api/seo/page?path=${encodeURIComponent('/error?code=network')}`)).json();
+  assert.equal(errorPage.indexable, false);
+  assert.ok(!errorPage.url);
+  const home =await (await fetch(`${base}/api/seo/page?path=/`)).json();
   assert.equal(home.url, 'https://diegoespinarodriguez.com/');
   assert.equal(home.image, 'https://diegoespinarodriguez.com/og-image.png');
   assert.ok(home.structuredData['@graph'].some((node) => node['@type'] === 'Person' && node.sameAs.includes(original.profile.github)));

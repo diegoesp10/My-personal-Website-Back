@@ -39,6 +39,7 @@ jobs:
           dotnet build DiegoPortfolio.slnx --no-restore
           dotnet test DiegoPortfolio.slnx --no-build --no-restore
           node scripts/test-api.mjs
+          node scripts/test-errors.mjs
       - name: Check deployment scripts and rollback behavior
         run: |
           bash -n .github/scripts/deploy-container.sh

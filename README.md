@@ -117,6 +117,7 @@ docker build --target test . # ejecuta las pruebas xUnit dentro de la build
 dotnet test DiegoPortfolio.slnx
 dotnet build DiegoPortfolio.slnx
 node scripts/test-api.mjs
+node scripts/test-errors.mjs
 ```
 
 - `Portfolio.Tests`: validación del contenido (incluido `seed.json`), concurrencia por revisión, firmas de imagen, sitemap, metadatos SEO y servicio de GitHub (caché, modo degradado, espera entre reintentos, agregación de lenguajes).
@@ -142,7 +143,7 @@ Al primer arranque se copia `seed.json` a `App_Data/portfolio.json`; las edicion
 - El primer despliegue importa `portfolio.json` y `uploads`; los siguientes conservan el contenido del servidor. Las estadísticas de visitas solo existen en el servidor y nunca se sustituyen.
 - En Cloudflare, los nombres de host públicos del túnel (`diegoespinarodriguez.com` y `www`) apuntan a `http://web:8080`. Para que el mapa de visitas tenga ubicación, activa «Add visitor location headers» en *Rules › Transform Rules › Managed Transforms*. No crees registros DNS con la IP del servidor.
 - Para revisar la web publicada sin pasar por Cloudflare: `ssh -L 8080:127.0.0.1:8080 diego-portfolio` y abre <http://127.0.0.1:8080>. Registros: `ssh diego-portfolio "cd portfolio; docker compose logs --tail 100"`.
-- Con CI/CD activo ([docs/CI-CD.md](docs/CI-CD.md)), cada merge a `main` publica la imagen en GHCR y, tras tu aprobación en el entorno `production`, la despliega por SSH. Desde entonces, `Deploy-Server.ps1` queda para el contenido y las copias (`-ReplaceData`, `-Backup`, `-SetTunnelToken`): un despliegue completo con él sube imágenes construidas en tu PC y sustituiría las publicadas desde `main`.
+- Con CI/CD activo ([docs/CI-CD.md](docs/CI-CD.md)), cada merge a `main` publica la imagen en GHCR y, tras tu aprobación en el entorno `production`, la despliega por SSH. Desde entonces, las publicaciones de código se realizan con CI/CD. `Deploy-Server.ps1 -Backup` y `-SetTunnelToken` son operaciones de mantenimiento. Atención: `-ReplaceData` también sube las imágenes locales, incluso con `-SkipBuild`; por tanto sustituye las publicadas desde `main` además del contenido. Revisar esa operación antes de usarla con producción.
 - Copia de seguridad: `.\scripts\Deploy-Server.ps1 -Backup` descarga el volumen del servidor (contenido, imágenes y visitas) a `App_Data/backups/servidor-<fecha>.tgz`. Hazla antes de cada `-ReplaceData`.
 
 ## Rama main protegida
@@ -154,6 +155,7 @@ Al primer arranque se copia `seed.json` a `App_Data/portfolio.json`; las edicion
 ```text
 ├── Portfolio.Api/              Controladores por funcionalidad, middleware y composición
 ├── Portfolio.Application/      Servicios, validación y contratos (Portfolios, Images, GitHub, Sitemaps, Seo, Visitors)
+├── Portfolio.Errors/           Catálogo es/en, contratos de error, registro y correlación
 ├── Portfolio.Domain/           Modelos: perfil, proyectos, experiencia, formación, diario, GitHub
 ├── Portfolio.Infrastructure/   Repositorios JSON e imágenes, cliente HTTP de GitHub
 ├── Portfolio.Tests/            Pruebas xUnit
@@ -172,3 +174,11 @@ El contenido incluye Azure y pipelines de CI/CD, uso diario de Claude y Codex y 
 ## CI/CD por SSH
 
 El workflow `.github/workflows/ci-cd.yml` comprueba las PR y publica una imagen al actualizar `main`. El despliegue a la VM espera aprobación en el entorno `production`, usa secretos de GitHub y conserva los datos. Configuración, credenciales y activación en [docs/CI-CD.md](docs/CI-CD.md).
+
+## Errores e idioma
+
+`Portfolio.Errors` centraliza los códigos y mensajes. La API devuelve Problem Details con correlación y mantiene un historial privado en el volumen persistente. El editor local incorpora una pestaña Errores con consulta protegida y mensajes en es/en; Production no permite acceder al historial por HTTP.
+
+`language` se envía en el cuerpo JSON, en GET como query y en multipart como campo. Español es el valor predeterminado. Las respuestas de los controladores añaden mensajes de operación localizados; el contenido editorial conserva su idioma original. Contratos, retención y pruebas en [docs/ERRORS-AND-LANGUAGE.md](docs/ERRORS-AND-LANGUAGE.md).
+
+La ficha del proyecto `portfolio` incluye diez apartados sobre arquitectura, VM Ubuntu en Azure, Docker Compose, Cloudflare Tunnel, integración continua, protección de main, aprobación de producción, imágenes en GHCR, publicación SSH y recuperación. `project.sections` es una colección aditiva y editable de `{ title, text }`, vacía por defecto en contenido anterior.

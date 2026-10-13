@@ -1,3 +1,4 @@
+using Portfolio.Errors.Catalog;
 using Portfolio.Application.Common;
 using Portfolio.Domain.Portfolios;
 
@@ -17,6 +18,6 @@ public sealed class PortfolioService(IPortfolioRepository repository, IPortfolio
 
         return saved
             ? OperationResult<PortfolioData>.Success(updated)
-            : OperationResult<PortfolioData>.Conflict("El contenido ha cambiado. Recarga el editor antes de guardar.");
+            : OperationResult<PortfolioData>.Conflict(ErrorCatalog.Get("portfolio.conflict").Message());
     }
 }

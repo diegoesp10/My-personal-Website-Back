@@ -24,7 +24,9 @@ public sealed class Startup(IConfiguration configuration, IWebHostEnvironment en
         app.UseDefaultFiles();
         app.UseStaticFiles();
         app.UseRouting();
+        app.UseMiddleware<ApiRequestContextMiddleware>();
         app.UseRateLimiter();
+        app.UseMiddleware<RequestLanguageMiddleware>();
         app.UseEndpoints(endpoints => endpoints.MapApiRoutes(environment));
     }
 }

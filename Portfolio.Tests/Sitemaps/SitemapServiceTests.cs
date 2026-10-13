@@ -17,6 +17,8 @@ public sealed class SitemapServiceTests
 
         Assert.Contains(entries, entry => entry.Path == "/" && entry.LastModified is null);
         Assert.Contains(entries, entry => entry.Path == "/experiencia");
+        Assert.Contains(entries, entry => entry.Path == "/legal/privacidad");
+        Assert.DoesNotContain(entries, entry => entry.Path is "/legal" or "/error" or "/editor");
         Assert.All(seed.Projects, project => Assert.Contains(entries, entry => entry.Path == "/proyectos/" + project.Id));
         var journal = Assert.Single(entries, entry => entry.Path == "/diario/" + seed.Entries[0].Id);
         Assert.Equal(DateOnly.Parse(seed.Entries[0].Date), journal.LastModified);

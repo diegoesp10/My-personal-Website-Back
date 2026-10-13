@@ -2,7 +2,7 @@ using System.Globalization;
 using System.Threading.RateLimiting;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.Extensions.Options;
-using Portfolio.Api.Contracts;
+using Portfolio.Api.Features.Errors;
 
 namespace Portfolio.Api.Configuration;
 
@@ -42,8 +42,7 @@ public static class RateLimitingExtensions
                 if (context.Lease.TryGetMetadata(MetadataName.RetryAfter, out var retryAfter))
                     response.Headers.RetryAfter = Math.Ceiling(retryAfter.TotalSeconds).ToString(CultureInfo.InvariantCulture);
                 response.Headers.CacheControl = "no-store";
-                return new ValueTask(response.WriteAsJsonAsync(
-                    new ApiError("Demasiadas solicitudes. Inténtalo de nuevo en un momento."), cancellationToken));
+                return new ValueTask(context.HttpContext.Features.Get<ApiErrorFeature>()!.Errors.WriteAsync(context.HttpContext, 429));
             };
         });
         return services;

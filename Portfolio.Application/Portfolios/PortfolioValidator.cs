@@ -1,3 +1,4 @@
+using Portfolio.Errors.Catalog;
 using System.Globalization;
 using System.Net.Mail;
 using System.Text.Json;
@@ -15,22 +16,26 @@ public sealed class PortfolioValidator : IPortfolioValidator
         if (portfolio?.Profile is null || portfolio.Projects is null || portfolio.Skills is null
             || portfolio.Entries is null || portfolio.Metrics is null
             || portfolio.Experience is null || portfolio.Education is null)
-            return "El contenido está incompleto.";
+            return ErrorCatalog.Get("portfolio.incomplete").Message();
 
         if (string.IsNullOrWhiteSpace(portfolio.Profile.Name) || string.IsNullOrWhiteSpace(portfolio.Profile.Role))
-            return "Nombre y especialidad son obligatorios.";
+            return ErrorCatalog.Get("portfolio.profile").Message();
 
         if (portfolio.Projects.Length > 100 || portfolio.Entries.Length > 500
             || portfolio.Skills.Length > 30 || portfolio.Metrics.Length > 12
             || portfolio.Experience.Length > 50 || portfolio.Education.Length > 30)
-            return "Hay demasiados elementos.";
+            return ErrorCatalog.Get("portfolio.items").Message();
 
         var serialized = JsonSerializer.Serialize(portfolio);
-        if (serialized.Length > 1_000_000) return "El contenido supera el tamaño permitido.";
+        if (serialized.Length > 1_000_000) return ErrorCatalog.Get("portfolio.size").Message();
 
         using var document = JsonDocument.Parse(serialized);
         if (HasInvalidText(document.RootElement))
-            return "Los campos no pueden ser nulos ni superar 20.000 caracteres.";
+            return ErrorCatalog.Get("portfolio.text").Message();
+
+        if (portfolio.Projects.Any(project => project.Sections.Length > MaximumListItems
+            || project.Sections.Any(section => string.IsNullOrWhiteSpace(section.Title) || string.IsNullOrWhiteSpace(section.Text))))
+            return ErrorCatalog.Get("portfolio.sections").Message();
 
         return ValidateIdentifiers(portfolio)
             ?? ValidateItems(portfolio)
@@ -50,7 +55,7 @@ public sealed class PortfolioValidator : IPortfolioValidator
         };
 
         return collections.Any(ids => ids.Any(string.IsNullOrWhiteSpace) || ids.Distinct().Count() != ids.Count())
-            ? "Cada elemento debe tener un identificador único." : null;
+            ? ErrorCatalog.Get("portfolio.identifiers").Message() : null;
     }
 
     private static string? ValidateItems(PortfolioData portfolio)
@@ -65,7 +70,7 @@ public sealed class PortfolioValidator : IPortfolioValidator
             || portfolio.Metrics.Any(item => string.IsNullOrWhiteSpace(item.Value) || string.IsNullOrWhiteSpace(item.Label))
             || portfolio.Education.Any(item => string.IsNullOrWhiteSpace(item.Title));
 
-        return invalid ? "Revisa los títulos, fechas, etiquetas, enlaces y métricas." : null;
+        return invalid ? ErrorCatalog.Get("portfolio.fields").Message() : null;
     }
 
     private static string? ValidateExperience(PortfolioData portfolio)
@@ -73,18 +78,18 @@ public sealed class PortfolioValidator : IPortfolioValidator
         foreach (var item in portfolio.Experience)
         {
             if (string.IsNullOrWhiteSpace(item.Role) || string.IsNullOrWhiteSpace(item.Company))
-                return "Cada experiencia necesita puesto y empresa.";
+                return ErrorCatalog.Get("portfolio.experience").Message();
             if (item.Highlights.Length > MaximumListItems || item.Stack.Length > MaximumListItems * 2)
-                return "Hay demasiados logros o tecnologías en una experiencia.";
+                return ErrorCatalog.Get("portfolio.experience_items").Message();
             if (!TryParseMonth(item.Start, out var start) || item.End.Length > 0 && !TryParseMonth(item.End, out _))
-                return "Las fechas de la experiencia deben tener el formato AAAA-MM.";
+                return ErrorCatalog.Get("portfolio.experience_dates").Message();
             if (item.End.Length > 0 && TryParseMonth(item.End, out var end) && end < start)
-                return "La fecha de fin de una experiencia no puede ser anterior al inicio.";
+                return ErrorCatalog.Get("portfolio.experience_order").Message();
         }
 
         var positions = portfolio.Experience.Select(item => item.Id).ToHashSet(StringComparer.Ordinal);
         if (portfolio.Projects.Any(project => project.ExperienceId.Length > 0 && !positions.Contains(project.ExperienceId)))
-            return "Un proyecto está asociado a una experiencia que no existe.";
+            return ErrorCatalog.Get("portfolio.experience_reference").Message();
 
         return null;
     }
@@ -98,27 +103,27 @@ public sealed class PortfolioValidator : IPortfolioValidator
 
         return links.Any(link => link.Length > 2048 || link.Length > 0
             && (!Uri.TryCreate(link, UriKind.Absolute, out var uri) || uri.Scheme is not ("http" or "https")))
-            ? "Los enlaces deben empezar por https:// o http://." : null;
+            ? ErrorCatalog.Get("portfolio.links").Message() : null;
     }
 
     private static string? ValidateEmail(string email) => email.Length > 254
         || email.Any(character => character is '\r' or '\n')
         || email.Length > 0 && !MailAddress.TryCreate(email, out _)
-            ? "Introduce un correo válido." : null;
+            ? ErrorCatalog.Get("portfolio.email").Message() : null;
 
     // Used in tel: links: digits with an optional leading +, and spaces, dots, dashes or brackets to group them.
     private static string? ValidatePhone(string phone) => phone.Length > 0
         && (phone.Length > 32 || phone.Count(char.IsAsciiDigit) is < 6 or > 15
             || phone.Where((character, index) => !(char.IsAsciiDigit(character) || character is ' ' or '.' or '-' or '(' or ')'
                 || character == '+' && index == 0)).Any())
-            ? "Introduce un teléfono válido, por ejemplo +34 600 000 000." : null;
+            ? ErrorCatalog.Get("portfolio.phone").Message() : null;
 
     private static string? ValidateImages(PortfolioData portfolio)
     {
         var images = new[] { portfolio.Profile.Portrait }.Concat(portfolio.Projects.Select(item => item.Image));
         return images.Any(image => image.Length > 0 && (!image.StartsWith("/uploads/", StringComparison.Ordinal)
             || image.Contains("..") || image.IndexOfAny(['?', '#', '\\']) >= 0))
-                ? "Utiliza las imágenes subidas desde el editor." : null;
+                ? ErrorCatalog.Get("portfolio.images").Message() : null;
     }
 
     private static bool TryParseMonth(string value, out DateOnly month)

@@ -1,4 +1,5 @@
 using Microsoft.Extensions.Logging;
+using Portfolio.Errors.Registry;
 using Microsoft.Extensions.Options;
 using Portfolio.Domain.GitHub;
 
@@ -9,7 +10,7 @@ namespace Portfolio.Application.GitHub;
 /// the last summary is served as stale for a limited time and new attempts wait for the retry delay.
 /// </summary>
 public sealed class GitHubActivityService(IGitHubSource source, IOptions<GitHubOptions> options,
-    TimeProvider clock, ILogger<GitHubActivityService> logger) : IGitHubActivityService, IDisposable
+    TimeProvider clock, ILogger<GitHubActivityService> logger, IErrorReporter reporter, IErrorCorrelation correlation) : IGitHubActivityService, IDisposable
 {
     private const int MaximumCommitMessageLength = 140;
     private const int LanguagesShown = 6;
@@ -37,7 +38,11 @@ public sealed class GitHubActivityService(IGitHubSource source, IOptions<GitHubO
             catch (GitHubUnavailableException exception)
             {
                 _nextAttempt = clock.GetUtcNow() + settings.RetryDelay;
-                logger.LogWarning(exception, "No se pudo actualizar la actividad pública de GitHub de {User}.", settings.User);
+                var traceId = correlation.CurrentTraceId ?? Guid.NewGuid().ToString("N");
+                logger.LogWarning("GitHub refresh failed: {ExceptionType}; correlation {TraceId}", exception.GetType().FullName, traceId);
+                // The endpoint still serves its documented degraded response (HTTP 200).
+                await reporter.ReportAsync(new ErrorRecord(Guid.NewGuid().ToString("N"), clock.GetUtcNow(),
+                    "github.unavailable", 200, traceId, "GET", "api/github", exception.GetType().FullName, "dependency"));
                 return Fallback(settings);
             }
         }

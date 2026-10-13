@@ -1,6 +1,8 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Net.Http.Headers;
 using Portfolio.Api.Contracts;
+using Portfolio.Api.Contracts.Requests;
+using Portfolio.Api.Features.Errors;
 using Portfolio.Api.Features.Editor;
 using Portfolio.Application.Common;
 using Portfolio.Application.Portfolios;
@@ -10,14 +12,14 @@ namespace Portfolio.Api.Features.Portfolios;
 
 [ApiController]
 [Route("api/portfolio")]
-public sealed class PortfolioController(IPortfolioService service) : ControllerBase
+public sealed class PortfolioController(IPortfolioService service, RequestLanguage language) : ControllerBase
 {
     /// <summary>Public content. The revision is published as ETag so repeated visits can answer 304 Not Modified.</summary>
     [HttpGet]
     public async Task<ActionResult<PortfolioData>> Get(CancellationToken cancellationToken)
     {
         var portfolio = await service.GetAsync(cancellationToken);
-        if (!EntityTagHeaderValue.TryParse($"\"{portfolio.Revision}\"", out var entityTag)) return Ok(portfolio);
+        if (!EntityTagHeaderValue.TryParse($"\"{portfolio.Revision}{(language.Value == "en" ? "-en" : "")}\"", out var entityTag)) return Ok(portfolio);
 
         Response.Headers.CacheControl = "no-cache";
         Response.GetTypedHeaders().ETag = entityTag;
@@ -28,10 +30,10 @@ public sealed class PortfolioController(IPortfolioService service) : ControllerB
     }
 
     [HttpPut]
-    [LocalEditorWrite]
-    public async Task<ActionResult<PortfolioData>> Save([FromBody] PortfolioData? portfolio, CancellationToken cancellationToken)
+    [LocalEditorOnly]
+    public async Task<ActionResult<PortfolioData>> Save([FromBody] PortfolioWriteRequest? portfolio, CancellationToken cancellationToken)
     {
-        var result = await service.SaveAsync(portfolio, cancellationToken);
+        var result = await service.SaveAsync(portfolio?.ToPortfolio(), cancellationToken);
         if (result.IsSuccess) return Ok(result.Value);
         var error = new ApiError(result.Error!);
         return result.Failure == FailureKind.Conflict ? Conflict(error) : BadRequest(error);

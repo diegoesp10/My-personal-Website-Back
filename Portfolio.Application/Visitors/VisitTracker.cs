@@ -7,6 +7,7 @@ using System.Text.RegularExpressions;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Portfolio.Domain.Visitors;
+using Portfolio.Errors.Registry;
 
 namespace Portfolio.Application.Visitors;
 
@@ -16,7 +17,7 @@ namespace Portfolio.Application.Visitors;
 /// across days or traced back to an address. Locations are kept at city level with coordinates rounded to ~10 km.
 /// </summary>
 public sealed partial class VisitTracker(IVisitStore store, IGeoLocator locator, IOptions<VisitorOptions> options,
-    TimeProvider clock, ILogger<VisitTracker> logger) : IVisitTracker, IDisposable
+    TimeProvider clock, ILogger<VisitTracker> logger, IErrorReporter reporter) : IVisitTracker, IDisposable
 {
     private const int SummaryDays = 30;
     private const int SummaryLocations = 300;
@@ -144,9 +145,12 @@ public sealed partial class VisitTracker(IVisitStore store, IGeoLocator locator,
             await store.SaveAsync(_totals.ToStats(), cancellationToken);
             _dirty = false;
         }
-        catch (IOException exception)
+        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
         {
-            logger.LogError(exception, "No se pudieron guardar las estadísticas de visitas.");
+            var traceId = Guid.NewGuid().ToString("N");
+            logger.LogError("Visit persistence failed: {ExceptionType}; correlation {TraceId}", exception.GetType().FullName, traceId);
+            await reporter.ReportAsync(new ErrorRecord(Guid.NewGuid().ToString("N"), clock.GetUtcNow(),
+                "visitors.persistence", null, traceId, "BACKGROUND", "visitors/flush", exception.GetType().FullName, "background"));
         }
         finally
         {
