@@ -5,10 +5,12 @@ using Microsoft.Extensions.Options;
 using Portfolio.Application.GitHub;
 using Portfolio.Application.Images;
 using Portfolio.Application.Portfolios;
+using Portfolio.Application.Visitors;
 using Portfolio.Infrastructure.GitHub;
 using Portfolio.Infrastructure.Images;
 using Portfolio.Infrastructure.Portfolios;
 using Portfolio.Infrastructure.Storage;
+using Portfolio.Infrastructure.Visitors;
 
 namespace Portfolio.Infrastructure;
 
@@ -29,7 +31,16 @@ public static class DependencyInjection
         services.AddSingleton<IImageRepository, FileImageRepository>();
         services.AddHostedService<FileStorageInitializer>();
         services.AddGitHub(configuration);
+        services.AddVisitors(configuration);
         return services;
+    }
+
+    private static void AddVisitors(this IServiceCollection services, IConfiguration configuration)
+    {
+        services.AddOptions<GeoDatabaseOptions>().Bind(configuration.GetSection(GeoDatabaseOptions.SectionName));
+        services.AddSingleton<IVisitStore, JsonVisitStore>();
+        services.AddSingleton<IGeoLocator, MmdbGeoLocator>();
+        services.AddHostedService<VisitFlushService>();
     }
 
     private static void AddGitHub(this IServiceCollection services, IConfiguration configuration)

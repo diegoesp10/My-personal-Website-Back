@@ -37,6 +37,7 @@ public sealed class PortfolioValidator : IPortfolioValidator
             ?? ValidateExperience(portfolio)
             ?? ValidateLinks(portfolio)
             ?? ValidateEmail(portfolio.Profile.Email)
+            ?? ValidatePhone(portfolio.Profile.Phone)
             ?? ValidateImages(portfolio);
     }
 
@@ -81,6 +82,10 @@ public sealed class PortfolioValidator : IPortfolioValidator
                 return "La fecha de fin de una experiencia no puede ser anterior al inicio.";
         }
 
+        var positions = portfolio.Experience.Select(item => item.Id).ToHashSet(StringComparer.Ordinal);
+        if (portfolio.Projects.Any(project => project.ExperienceId.Length > 0 && !positions.Contains(project.ExperienceId)))
+            return "Un proyecto está asociado a una experiencia que no existe.";
+
         return null;
     }
 
@@ -100,6 +105,13 @@ public sealed class PortfolioValidator : IPortfolioValidator
         || email.Any(character => character is '\r' or '\n')
         || email.Length > 0 && !MailAddress.TryCreate(email, out _)
             ? "Introduce un correo válido." : null;
+
+    // Used in tel: links: digits with an optional leading +, and spaces, dots, dashes or brackets to group them.
+    private static string? ValidatePhone(string phone) => phone.Length > 0
+        && (phone.Length > 32 || phone.Count(char.IsAsciiDigit) is < 6 or > 15
+            || phone.Where((character, index) => !(char.IsAsciiDigit(character) || character is ' ' or '.' or '-' or '(' or ')'
+                || character == '+' && index == 0)).Any())
+            ? "Introduce un teléfono válido, por ejemplo +34 600 000 000." : null;
 
     private static string? ValidateImages(PortfolioData portfolio)
     {

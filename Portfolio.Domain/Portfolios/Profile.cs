@@ -11,7 +11,10 @@ public sealed record Profile
     public string Location { get; init; } = "";
     public string Availability { get; init; } = "";
     public string Languages { get; init; } = "";
+    public bool HasDrivingLicense { get; init; }
+    public bool HasOwnVehicle { get; init; }
     public string Email { get; init; } = "";
+    public string Phone { get; init; } = "";
     public string Github { get; init; } = "";
     public string Linkedin { get; init; } = "";
     public string Portrait { get; init; } = "";

@@ -50,7 +50,7 @@ public sealed class PortfolioValidatorTests
     public void Accepts_current_experience_without_end()
     {
         var seed = LoadSeed();
-        var portfolio = seed with { Experience = [seed.Experience[0] with { End = "" }] };
+        var portfolio = seed with { Experience = [seed.Experience[0] with { End = "" }, .. seed.Experience[1..]] };
 
         Assert.Null(_validator.Validate(portfolio));
     }
@@ -80,6 +80,52 @@ public sealed class PortfolioValidatorTests
         var portfolio = seed with { Experience = [seed.Experience[0], seed.Experience[0]] };
 
         Assert.Equal("Cada elemento debe tener un identificador único.", _validator.Validate(portfolio));
+    }
+
+    [Fact]
+    public void Rejects_projects_linked_to_an_unknown_position()
+    {
+        var seed = LoadSeed();
+        var project = seed.Projects[0] with { ExperienceId = "empresa-inexistente" };
+
+        Assert.Equal("Un proyecto está asociado a una experiencia que no existe.",
+            _validator.Validate(seed with { Projects = [project] }));
+    }
+
+    [Fact]
+    public void Seed_links_professional_projects_to_existing_positions()
+    {
+        var seed = LoadSeed();
+        var positions = seed.Experience.Select(item => item.Id).ToHashSet();
+
+        var professional = seed.Projects.Where(project => project.ExperienceId.Length > 0).ToArray();
+
+        Assert.NotEmpty(professional);
+        Assert.All(professional, project => Assert.Contains(project.ExperienceId, positions));
+    }
+
+    [Theory]
+    [InlineData("")]
+    [InlineData("+34 691 649 298")]
+    [InlineData("+34 (691) 64-92-98")]
+    public void Accepts_empty_or_well_formed_phones(string phone)
+    {
+        var seed = LoadSeed();
+
+        Assert.Null(_validator.Validate(seed with { Profile = seed.Profile with { Phone = phone } }));
+    }
+
+    [Theory]
+    [InlineData("12345")]
+    [InlineData("691 649 298 ext. 2")]
+    [InlineData("34+691649298")]
+    [InlineData("javascript:alert(1)")]
+    public void Rejects_malformed_phones(string phone)
+    {
+        var seed = LoadSeed();
+
+        Assert.Equal("Introduce un teléfono válido, por ejemplo +34 600 000 000.",
+            _validator.Validate(seed with { Profile = seed.Profile with { Phone = phone } }));
     }
 
     [Fact]

@@ -33,7 +33,9 @@ if (Test-Path -LiteralPath (Join-Path $localData 'portfolio.json')) {
         'cp /app/data/portfolio.json /app/data/backups/portfolio-$(date +%Y%m%d-%H%M%S).json; rm /app/data/portfolio.json; fi; ' +
         'if [ ! -e /app/data/portfolio.json ]; then cp /import/portfolio.json /app/data/portfolio.json; ' +
         'if [ -d /import/uploads ]; then mkdir -p /app/data/uploads; cp -a /import/uploads/. /app/data/uploads/; fi; ' +
-        'echo Contenido local importado al volumen.; fi; chown -R app:app /app/data'
+        'echo Contenido local importado al volumen.; fi; ' +
+        'if [ -d /import/geo ]; then mkdir -p /app/data/geo; cp -a /import/geo/. /app/data/geo/; fi; ' +
+        'chown -R app:app /app/data'
     docker run --rm --user 0 --entrypoint sh -e "REPLACE=$replace" `
         --mount 'type=volume,source=diego-portfolio-data,target=/app/data' `
         --mount "type=bind,source=$localData,target=/import,readonly" `
