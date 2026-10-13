@@ -119,32 +119,83 @@
       "id": "peluqueria-lucia",
       "title": "Peluquería Lucía Espina",
       "category": "Full stack",
-      "description": "Web pública y gestión interna de una peluquería: agenda propia, clientes, cobros y catálogo, con ASP.NET Core 10 y SQL Server.",
-      "details": "Proyecto en desarrollo para la Peluquería Ecológica Lucía Espina. Una misma aplicación reúne la web pública del salón y una administración privada para gestionar el trabajo diario.\n\nEl panel permite consultar clientes y su historial, registrar visitas y servicios, gestionar cobros en efectivo, tarjeta o mixtos, imprimir tickets y exportar el periodo seleccionado a Excel. Los cambios de precio en el catálogo conservan los importes de las visitas anteriores.\n\nLa agenda propia ofrece disponibilidad y permite solicitar citas, preparar propuestas y confirmarlas mediante enlaces privados con caducidad. Incorpora una cola de comunicaciones por correo y preparación de mensajes de WhatsApp para su envío manual; la aceptación del cliente es un paso independiente. La configuración de SMTP está pendiente antes de activar los envíos.\n\nLa administración exige contraseña y Microsoft Authenticator, con códigos de recuperación, sesiones revocables y protección CSRF. Las reseñas se verifican mediante tickets y se moderan desde el panel.\n\nArquitectura por capas: Domain, Application, Infrastructure y Web. ASP.NET Core MVC con vistas Razor, Entity Framework Core y SQL Server; bibliotecas independientes para correo y WhatsApp. Program.cs se limita al arranque y la composición de dependencias se organiza en Startup.cs y configuración por funcionalidades.",
+      "description": "Web pública y gestión de una peluquería, en producción: ASP.NET Core 10 y SQL Server en Azure App Service, publicada con GitHub Actions y Cloudflare.",
+      "details": "Web y gestión interna de la Peluquería Ecológica Lucía Espina, en producción en luciapeluqueriaecologica.com. Una misma aplicación reúne la web pública del salón, en español e inglés, y una administración privada para el trabajo diario: clientes e historial, visitas y cobros, catálogo con precios, tickets, reseñas verificadas y exportación a Excel.\n\nLa parte pública incluye una agenda propia: muestra disponibilidad, recoge solicitudes de cita y las confirma mediante enlaces privados con caducidad. Las reseñas se verifican con el código de un ticket cobrado y se moderan desde el panel. La administración exige contraseña y Microsoft Authenticator, con códigos de recuperación, sesiones revocables y protección CSRF.\n\nArquitectura por capas: Domain, Application, Infrastructure y Web. ASP.NET Core MVC con vistas Razor, Entity Framework Core y SQL Server; bibliotecas independientes para correo y WhatsApp. Las secciones siguientes recorren cómo la llevé del ordenador del salón a Azure y cómo se publica cada versión.",
+      "sections": [
+        {
+          "title": "Del ordenador del salón a la nube",
+          "text": "La primera versión corría en el ordenador de la peluquería, sobre IIS y un SQL Server local, con la cadena de conexión en el administrador de credenciales de Windows y las claves cifradas con DPAPI. Al pasar a Azure no quise mantener dos códigos: la aplicación detecta dónde se ejecuta y toma cada pieza del sitio adecuado. En Windows sigue usando IIS, DPAPI y el almacén de credenciales; en Azure, la configuración de la Web App, Key Vault y la identidad administrada.\n\nEso obligó a aislar en contratos todo lo que dependía del entorno: dónde se guardan las fotos, cómo se cifran las claves, de dónde sale la contraseña del correo o qué cabecera trae la IP real del visitante."
+        },
+        {
+          "title": "Azure: App Service, Azure SQL y Key Vault",
+          "text": "La web corre en Azure App Service para Linux con un plan B1: una instancia pequeña, suficiente para un salón, con Always On para que la primera pantalla del día no espere a que arranque la aplicación. Solo admite HTTPS, tiene FTP desactivado y el comando de inicio es el propio ensamblado de .NET 10.\n\nLa base de datos es Azure SQL en el nivel Basic (5 DTU), porque la oferta gratuita no está disponible en la región elegida, con intercalación Modern_Spanish_CI_AS para que las búsquedas por nombre ignoren mayúsculas y tildes igual que en el SQL Server local. Key Vault guarda la clave con la que ASP.NET Core protege sus datos (Authenticator, enlaces de cita, códigos de reseña) y el secreto del correo. Todo vive en Spain Central, en un grupo de recursos propio, y el coste ronda los veinte dólares al mes."
+        },
+        {
+          "title": "Sin contraseñas: identidad administrada",
+          "text": "Ninguna pieza del sistema usa contraseñas. La Web App tiene una identidad administrada asignada por el sistema; el servidor SQL solo admite autenticación de Microsoft Entra, y la aplicación entra con esa identidad: la cadena de conexión lleva Authentication=Active Directory Managed Identity y ningún secreto. En la base de datos, esa identidad existe como usuario externo creado con T-SQL, con los permisos justos.\n\nKey Vault funciona igual, con permisos por roles: la identidad de la Web App tiene solo el rol que necesita para usar la clave de protección de datos. Las claves de las cookies se guardan en SQL cifradas con esa clave, así que una copia de la base de datos no sirve sin Key Vault. La contraseña del SMTP llega como referencia a un secreto de Key Vault, nunca como valor en la configuración."
+        },
+        {
+          "title": "Publicación con GitHub Actions y OIDC",
+          "text": "El repositorio es público y la rama main está protegida: solo cambia por pull request, con compilación y pruebas en verde y la aprobación del propietario. Cada pull request levanta en GitHub Actions un SQL Server temporal en contenedor y ejecuta las pruebas de dominio, de seguridad y de migración con datos.\n\nAl fusionar en main, el flujo repite las pruebas, espera la aprobación manual del entorno de producción, publica en App Service y comprueba que la web responde 200. GitHub entra en Azure con una identidad federada (OIDC): Azure confía en el token que GitHub emite para ese repositorio y ese entorno, de modo que en los secretos del repositorio solo hay identificadores, ninguna credencial que robar o rotar."
+        },
+        {
+          "title": "Migraciones con datos reales",
+          "text": "La base de datos tiene datos reales del negocio, así que las migraciones de Entity Framework Core son siempre aditivas: añaden columnas e índices y trasladan datos antes de retirar nada, y la versión anterior sigue funcionando con el esquema nuevo. No las aplica el despliegue: las aplico yo antes de publicar, con mi cuenta de Entra y mi IP en el firewall del servidor, de forma que el código nuevo encuentra el esquema listo.\n\nUna prueba automática reproduce la base de datos de la versión anterior con datos, la migra y comprueba que no se pierde nada. Las fotos del catálogo y de las reseñas viven en el almacenamiento persistente de App Service, que sobrevive a cada despliegue."
+        },
+        {
+          "title": "Dominio y DNS con Cloudflare",
+          "text": "El dominio está en Cloudflare. Primero añadí el dominio y su www como dominios personalizados de la Web App y creé en Cloudflare los registros que Azure pide para validarlos (un TXT de verificación y el registro del nombre), con el proxy desactivado hasta que Azure aceptó el dominio.\n\nDespués generé en Cloudflare un certificado de origen de larga duración, lo convertí a PFX y lo subí a App Service enlazado a los dos nombres por SNI. Con eso puse el modo TLS en Completo (estricto): el visitante habla con Cloudflare por HTTPS y Cloudflare habla con Azure por HTTPS con un certificado que verifica. Por último activé el proxy en los registros DNS."
+        },
+        {
+          "title": "Solo Cloudflare llega al origen",
+          "text": "Con el proxy activo, el origen no debe aceptar tráfico que no venga de Cloudflare: si no, cualquiera que descubra la dirección de la Web App se saltaría el filtro. Las restricciones de acceso de App Service permiten solo los rangos de IP que publica Cloudflare y deniegan el resto.\n\nA partir de ahí, la IP real del visitante viaja en la cabecera CF-Connecting-IP, que la aplicación usa para el bloqueo por intentos de acceso y los límites por IP. La cabecera se activa solo cuando la restricción está en marcha, porque sin ella cualquiera podría falsificarla. La lista de hosts permitidos cierra el resto."
+        },
+        {
+          "title": "Lo que cambia y lo que no al publicar",
+          "text": "Hay cosas que funcionan igual en el salón y en la nube. La impresora térmica de tickets la maneja el navegador del salón por USB con WebUSB: el servidor solo construye el ticket en ESC/POS, así que imprimir sigue funcionando con la web publicada en Azure y HTTPS. La zona horaria se fija a Europe/Madrid y la cultura es-ES para fechas e importes.\n\nLas plantillas ARM del plan y de la Web App están en el repositorio para recrear el entorno, y la documentación recoge paso a paso la configuración, la identidad federada, las migraciones y Cloudflare, de modo que cualquiera pueda reproducir el montaje."
+        }
+      ],
       "year": "2026",
-      "status": "En desarrollo",
-      "url": "",
+      "status": "En producción",
+      "url": "https://luciapeluqueriaecologica.com",
       "image": "",
       "tags": [
         ".NET 10",
         "ASP.NET Core MVC",
-        "SQL Server",
-        "Entity Framework Core",
         "Razor",
+        "Entity Framework Core",
+        "SQL Server",
+        "Azure App Service",
+        "Azure SQL",
+        "Key Vault",
+        "Identidad administrada",
+        "GitHub Actions",
+        "OIDC",
+        "Cloudflare",
         "MFA",
+        "WebUSB",
         "ClosedXML"
       ],
       "art": "salon",
       "featured": false,
       "highlights": [
-        "Gestión de clientes, visitas e historial de servicios",
-        "Cobros en efectivo, tarjeta o mixtos, tickets y exportación a Excel",
-        "Agenda propia con disponibilidad y aceptación de citas mediante enlaces privados",
-        "Administración con MFA y sesiones revocables",
-        "Catálogo compartido entre web pública y panel; conservación de precios históricos",
-        "Arquitectura por capas y bibliotecas de comunicaciones independientes"
+        "En producción en luciapeluqueriaecologica.com, en español e inglés",
+        "Clientes, visitas, cobros, tickets, catálogo y exportación a Excel",
+        "Agenda propia con disponibilidad y confirmación mediante enlaces privados",
+        "Administración con MFA, sesiones revocables y reseñas verificadas por ticket",
+        "Azure App Service Linux B1, Azure SQL Basic y Key Vault en Spain Central",
+        "Sin contraseñas: identidad administrada para SQL y Key Vault",
+        "GitHub Actions con identidad federada OIDC y aprobación de producción",
+        "Migraciones aditivas aplicadas antes de publicar y probadas con datos",
+        "Cloudflare: DNS, certificado de origen, TLS estricto y origen restringido a sus IPs",
+        "Impresora de tickets por WebUSB desde el navegador del salón"
       ],
-      "links": [],
+      "links": [
+        {
+          "label": "Repositorio",
+          "url": "https://github.com/diegoesp10/PeluqueriaLuciaEspina"
+        }
+      ],
       "experienceId": ""
     },
     {
