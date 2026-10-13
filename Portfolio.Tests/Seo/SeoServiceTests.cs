@@ -88,10 +88,42 @@ public sealed class SeoServiceTests
     }
 
     [Theory]
+    [InlineData("/legal/aviso-legal", "Aviso legal")]
+    [InlineData("/legal/privacidad", "Política de privacidad")]
+    [InlineData("/legal/cookies", "Política de cookies")]
+    [InlineData("/legal/terminos", "Términos de uso")]
+    public async Task Legal_pages_are_indexable_with_their_own_description(string path, string name)
+    {
+        var seed = PortfolioValidatorTests.LoadSeed();
+
+        var page = await Get(seed, path);
+
+        Assert.True(page.Indexable);
+        Assert.Equal(name + " · " + seed.Profile.Name, page.Title);
+        Assert.Equal(Root + path, page.Url);
+        Assert.DoesNotContain(seed.Profile.Intro, page.Description);
+        var trail = Node(page, "BreadcrumbList")["itemListElement"]!.AsArray();
+        Assert.Equal(["Inicio", name], trail.Select(item => (string?)item!["name"]));
+    }
+
+    [Fact]
+    public async Task Redirected_legal_index_shares_the_legal_notice_address()
+    {
+        var seed = PortfolioValidatorTests.LoadSeed();
+
+        var page = await Get(seed, "/legal/");
+
+        Assert.True(page.Indexable);
+        Assert.Equal(Root + "/legal/aviso-legal", page.Url);
+    }
+
+    [Theory]
     [InlineData("/no-existe", "No encontrado")]
     [InlineData("/proyectos/no-existe", "No encontrado")]
+    [InlineData("/legal/no-existe", "No encontrado")]
     [InlineData("/editor", "Editor")]
-    public async Task Unknown_routes_and_the_editor_are_not_indexed(string path, string name)
+    [InlineData("/error?code=network&status=0", "Error")]
+    public async Task Unknown_routes_and_utility_pages_are_not_indexed(string path, string name)
     {
         var seed = PortfolioValidatorTests.LoadSeed();
 

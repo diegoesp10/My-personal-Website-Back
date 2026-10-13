@@ -31,6 +31,28 @@ public sealed partial class SeoService(IPortfolioRepository repository) : ISeoSe
             $"Notas de {profile.Name} sobre lo que construye, lo que aprende y lo que vive fuera del código."),
         ["/contacto"] = new("Contacto", "ContactPage", profile =>
             $"Contacto profesional de {profile.Name}, {Plain(profile.Role)}. Correo, teléfono y LinkedIn."),
+        // Legal texts. They live in the frontend (src/legal/documents.tsx), so their descriptions are fixed here.
+        ["/legal/aviso-legal"] = new("Aviso legal", "WebPage", _ =>
+            "Quién está detrás de esta web y en qué condiciones puedes usar lo que publica."),
+        ["/legal/privacidad"] = new("Política de privacidad", "WebPage", _ =>
+            "Qué datos llegan a esta web, para qué se usan y cómo ejercer tus derechos según el RGPD."),
+        ["/legal/cookies"] = new("Política de cookies", "WebPage", _ =>
+            "Esta web no usa cookies de seguimiento ni de publicidad. Esto es todo lo que guarda en tu navegador."),
+        ["/legal/terminos"] = new("Términos de uso", "WebPage", _ =>
+            "Las condiciones para usar esta web: qué puedes hacer y qué no, y qué puedes esperar de ella."),
+    };
+
+    // Routes that the frontend redirects: they share the metadata and canonical address of their target.
+    private static readonly Dictionary<string, string> Redirects = new(StringComparer.Ordinal)
+    {
+        ["/legal"] = "/legal/aviso-legal",
+    };
+
+    // Utility pages of the frontend that must never be indexed.
+    private static readonly Dictionary<string, string> Utilities = new(StringComparer.Ordinal)
+    {
+        ["/editor"] = "Editor",
+        ["/error"] = "Error",
     };
 
     public async Task<PageMetadata> GetPageAsync(string path, SiteAddress site, CancellationToken cancellationToken)
@@ -38,6 +60,7 @@ public sealed partial class SeoService(IPortfolioRepository repository) : ISeoSe
         var portfolio = await repository.GetAsync(cancellationToken);
         var pages = new PageBuilder(portfolio, site);
         var route = NormalizePath(path);
+        if (Redirects.TryGetValue(route, out var target)) route = target;
 
         if (route == "/") return pages.Home();
         if (Sections.TryGetValue(route, out var section)) return pages.Section(route, section);
@@ -50,7 +73,7 @@ public sealed partial class SeoService(IPortfolioRepository repository) : ISeoSe
             && portfolio.Entries.FirstOrDefault(entry => entry.Id == entryId) is { } entry)
             return pages.Entry(entry);
 
-        return pages.NotIndexed(route == "/editor" ? "Editor" : "No encontrado");
+        return pages.NotIndexed(Utilities.GetValueOrDefault(route, "No encontrado"));
     }
 
     /// <summary>Path without query, fragment or trailing slash, always starting with "/".</summary>
