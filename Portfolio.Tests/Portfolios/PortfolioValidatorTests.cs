@@ -8,10 +8,26 @@ public sealed class PortfolioValidatorTests
 {
     private readonly PortfolioValidator _validator = new();
 
-    internal static PortfolioData LoadSeed()
+    internal static PortfolioData LoadSeed(string language = ContentLanguage.Spanish)
     {
-        var json = File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "seed.json"));
+        var file = language == ContentLanguage.Spanish ? "seed.json" : $"seed.{language}.json";
+        var json = File.ReadAllText(Path.Combine(AppContext.BaseDirectory, file));
         return JsonSerializer.Deserialize<PortfolioData>(json, new JsonSerializerOptions(JsonSerializerDefaults.Web))!;
+    }
+
+    [Fact]
+    public void English_seed_is_valid_and_keeps_the_spanish_identifiers()
+    {
+        var spanish = LoadSeed();
+        var english = LoadSeed(ContentLanguage.English);
+
+        Assert.Null(_validator.Validate(english));
+        // Same identifiers in both languages: a page keeps its address when switching language.
+        Assert.Equal(spanish.Projects.Select(item => item.Id), english.Projects.Select(item => item.Id));
+        Assert.Equal(spanish.Entries.Select(item => item.Id), english.Entries.Select(item => item.Id));
+        Assert.Equal(spanish.Experience.Select(item => item.Id), english.Experience.Select(item => item.Id));
+        Assert.Equal(spanish.Skills.Select(item => item.Id), english.Skills.Select(item => item.Id));
+        Assert.NotEqual(spanish.Profile.Intro, english.Profile.Intro);
     }
 
     [Fact]

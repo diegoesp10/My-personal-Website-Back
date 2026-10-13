@@ -63,9 +63,11 @@ try {
   assert.equal(sitemap.status, 200);
   assert.match(sitemap.headers.get('content-type'), /^application\/xml/);
   const sitemapXml = await sitemap.text();
-  assert.match(sitemapXml, /<loc>https:\/\/diegoespinarodriguez\.com\/experiencia<\/loc>/);
-  assert.ok(sitemapXml.includes(`/proyectos/${original.projects[0].id}</loc>`));
-  assert.match(sitemapXml, /<loc>https:\/\/diegoespinarodriguez\.com\/legal\/privacidad<\/loc>/);
+  assert.match(sitemapXml, /<loc>https:\/\/diegoespinarodriguez\.com\/es\/experiencia<\/loc>/);
+  assert.match(sitemapXml, /<loc>https:\/\/diegoespinarodriguez\.com\/en\/experiencia<\/loc>/);
+  assert.ok(sitemapXml.includes(`/es/proyectos/${original.projects[0].id}</loc>`));
+  assert.match(sitemapXml, /<loc>https:\/\/diegoespinarodriguez\.com\/es\/legal\/privacidad<\/loc>/);
+  assert.ok(sitemapXml.includes('<xhtml:link rel="alternate" hreflang="en" href="https://diegoespinarodriguez.com/en/experiencia" />'));
   assert.doesNotMatch(sitemapXml, /\/error<\/loc>/);
   assert.equal((await fetch(`${base}/api/openapi/v1.json`)).status, 200);
 
@@ -134,7 +136,7 @@ try {
   assert.match(head.headers.get('content-type'), /^text\/html/);
   const headHtml = await head.text();
   assert.ok(headHtml.startsWith('<title>Prueba &lt;/script&gt;&lt;b&gt;&quot;&amp; · '));
-  assert.ok(headHtml.includes(`<link rel="canonical" href="https://diegoespinarodriguez.com/proyectos/${tricky.id}" data-seo>`));
+  assert.ok(headHtml.includes(`<link rel="canonical" href="https://diegoespinarodriguez.com/es/proyectos/${tricky.id}" data-seo>`));
   assert.ok(headHtml.includes(`<meta property="og:image" content="https://diegoespinarodriguez.com${image.url}" data-seo>`));
   assert.equal(headHtml.match(/<\/script>/g).length, 1);
   const jsonLd = headHtml.match(/<script type="application\/ld\+json" data-seo>(.*)<\/script>/s)[1];
@@ -142,13 +144,18 @@ try {
   assert.equal(JSON.parse(jsonLd)['@graph'].find((node) => node['@type'] === 'CreativeWork').name, tricky.title);
   assert.match(await (await fetch(`${base}/api/seo/head?path=/no-existe`)).text(), /<meta name="robots" content="noindex" data-seo>/);
   const legal = await (await fetch(`${base}/api/seo/head?path=/legal/privacidad`)).text();
-  assert.ok(legal.includes('<link rel="canonical" href="https://diegoespinarodriguez.com/legal/privacidad" data-seo>'));
+  assert.ok(legal.includes('<link rel="canonical" href="https://diegoespinarodriguez.com/es/legal/privacidad" data-seo>'));
+  const english = await (await fetch(`${base}/api/seo/head?path=/en/legal/privacidad`)).text();
+  assert.ok(english.includes('<title>Privacy policy · '));
+  assert.ok(english.includes('<link rel="alternate" hreflang="es" href="https://diegoespinarodriguez.com/es/legal/privacidad" data-seo>'));
+  assert.ok(english.includes('<meta property="og:locale" content="en_US" data-seo>'));
   assert.ok(!legal.includes('noindex'));
   const errorPage = await (await fetch(`${base}/api/seo/page?path=${encodeURIComponent('/error?code=network')}`)).json();
   assert.equal(errorPage.indexable, false);
   assert.ok(!errorPage.url);
   const home =await (await fetch(`${base}/api/seo/page?path=/`)).json();
-  assert.equal(home.url, 'https://diegoespinarodriguez.com/');
+  assert.equal(home.url, 'https://diegoespinarodriguez.com/es');
+  assert.equal(home.language, 'es');
   assert.equal(home.image, 'https://diegoespinarodriguez.com/og-image.png');
   assert.ok(home.structuredData['@graph'].some((node) => node['@type'] === 'Person' && node.sameAs.includes(original.profile.github)));
 

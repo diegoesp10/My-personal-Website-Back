@@ -42,10 +42,15 @@ if [ -f data.tgz ]; then
     --mount type=bind,source="$PWD/data.tgz",target=/import/data.tgz,readonly \
     diego-portfolio-api:local -c '
       set -e
-      if [ -e /app/data/portfolio.json ] && [ "$REPLACE" = 1 ]; then
-        mkdir -p /app/data/backups
-        cp /app/data/portfolio.json "/app/data/backups/portfolio-$(date +%Y%m%d-%H%M%S).json"
-        rm /app/data/portfolio.json
+      if [ "$REPLACE" = 1 ]; then
+        # Only the languages included in the archive are replaced; each one is backed up first.
+        for file in $(tar -tzf /import/data.tgz | grep -E "^portfolio(\.[a-z]+)?\.json$"); do
+          if [ -e "/app/data/$file" ]; then
+            mkdir -p /app/data/backups
+            cp "/app/data/$file" "/app/data/backups/${file%.json}-$(date +%Y%m%d-%H%M%S).json"
+            rm "/app/data/$file"
+          fi
+        done
       fi
       if [ -e /app/data/portfolio.json ]; then
         echo "El servidor ya tiene contenido y se conserva (-ReplaceData lo sustituye)."

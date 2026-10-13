@@ -58,7 +58,9 @@ try {
   const enResponse = await fetch(base + '/api/portfolio?language=en');
   const en = await enResponse.json();
   assert.equal(en.language, 'en'); assert.equal(en.message, 'Request completed successfully.');
-  assert.deepEqual(en.profile, es.profile); // Authored content is not machine-translated.
+  // Each language has its own authored copy of the content, with the same identifiers.
+  assert.equal(en.profile.name, es.profile.name); assert.notEqual(en.profile.intro, es.profile.intro);
+  assert.deepEqual(en.projects.map(project => project.id), es.projects.map(project => project.id));
   assert.match(enResponse.headers.get('etag'), /-en"$/);
   assert.equal((await fetch(base + '/api/portfolio?language=en', { headers: { 'If-None-Match': '"' + en.revision + '"' } })).status, 200);
   const validation = await problem(await put({ ...es, language: 'en', profile: { ...es.profile, name: '' }, password: 'do-not-record' }), 400, 'portfolio.profile', 'en');
@@ -76,14 +78,17 @@ try {
   const form = new FormData(); form.set('language', 'en'); form.set('file', new Blob(['do-not-record']), 'private-file.txt');
   const formatError = await problem(await fetch(base + '/api/uploads', { method: 'POST', headers: editor, body: form }), 400, 'image.format', 'en');
   assert.match(formatError.detail, /Unsupported format/);
-  const saved = await (await put({ ...es, language: 'en' })).json();
+  const saved = await (await put({ ...en, language: 'en' })).json();
   assert.equal(saved.message, 'Content saved successfully.'); assert.equal(saved.language, 'en');
-  const persisted = JSON.parse(readFileSync(resolve(dataPath, 'portfolio.json'), 'utf8'));
+  // Saved in the English file only; language and message are transport fields, never stored.
+  const persisted = JSON.parse(readFileSync(resolve(dataPath, 'portfolio.en.json'), 'utf8'));
+  assert.equal(persisted.revision, saved.revision); assert.equal(persisted.profile.intro, en.profile.intro);
   assert.equal(persisted.language, undefined); assert.equal(persisted.message, undefined);
-  const conflict = await problem(await put({ ...es, language: 'en' }), 409, 'portfolio.conflict', 'en');
+  assert.equal(JSON.parse(readFileSync(resolve(dataPath, 'portfolio.json'), 'utf8')).revision, es.revision);
+  const conflict = await problem(await put({ ...en, language: 'en' }), 409, 'portfolio.conflict', 'en');
   assert.match(conflict.detail, /Reload the editor/);
   // Force an unexpected server error using ONLY the isolated test content, then restore it.
-  const file = resolve(dataPath, 'portfolio.json'); const content = readFileSync(file, 'utf8');
+  const file = resolve(dataPath, 'portfolio.en.json'); const content = readFileSync(file, 'utf8');
   writeFileSync(file, '{do-not-record');
   await problem(await fetch(base + '/api/portfolio?language=en'), 500, 'server.unexpected', 'en');
   writeFileSync(file, content);

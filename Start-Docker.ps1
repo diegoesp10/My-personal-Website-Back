@@ -28,12 +28,14 @@ $localData = Join-Path $PSScriptRoot 'App_Data'
 if (Test-Path -LiteralPath (Join-Path $localData 'portfolio.json')) {
     $replace = if ($ReplaceData) { '1' } else { '0' }
     # No double quotes inside: Windows PowerShell 5.1 does not escape them for native commands.
-    $script = 'set -e; ' +
-        'if [ -e /app/data/portfolio.json ] && [ $REPLACE = 1 ]; then mkdir -p /app/data/backups; ' +
-        'cp /app/data/portfolio.json /app/data/backups/portfolio-$(date +%Y%m%d-%H%M%S).json; rm /app/data/portfolio.json; fi; ' +
-        'if [ ! -e /app/data/portfolio.json ]; then cp /import/portfolio.json /app/data/portfolio.json; ' +
-        'if [ -d /import/uploads ]; then mkdir -p /app/data/uploads; cp -a /import/uploads/. /app/data/uploads/; fi; ' +
-        'echo Contenido local importado al volumen.; fi; ' +
+    # One content file per language (portfolio.json, portfolio.en.json); a language missing in App_Data is left as is
+    # and the API creates it from its seed.
+    $script = 'set -e; imported=0; for f in portfolio.json portfolio.en.json; do ' +
+        'if [ -e /app/data/$f ] && [ -e /import/$f ] && [ $REPLACE = 1 ]; then mkdir -p /app/data/backups; ' +
+        'cp /app/data/$f /app/data/backups/${f%.json}-$(date +%Y%m%d-%H%M%S).json; rm /app/data/$f; fi; ' +
+        'if [ ! -e /app/data/$f ] && [ -e /import/$f ]; then cp /import/$f /app/data/$f; imported=1; fi; done; ' +
+        'if [ $imported = 1 ]; then if [ -d /import/uploads ]; then mkdir -p /app/data/uploads; ' +
+        'cp -a /import/uploads/. /app/data/uploads/; fi; echo Contenido local importado al volumen.; fi; ' +
         'if [ -d /import/geo ]; then mkdir -p /app/data/geo; cp -a /import/geo/. /app/data/geo/; fi; ' +
         'chown -R app:app /app/data'
     docker run --rm --user 0 --entrypoint sh -e "REPLACE=$replace" `

@@ -73,10 +73,12 @@ try {
 Remove-Item -LiteralPath $tar
 $files = @("$tar.gz")
 
-# Content: portfolio.json and uploads. install.sh only uses it when the server has none or with -ReplaceData.
+# Content: portfolio.json, portfolio.en.json and uploads. install.sh only uses it when the server has none or with
+# -ReplaceData.
 $data = Join-Path $root 'App_Data'
 if (Test-Path -LiteralPath (Join-Path $data 'portfolio.json')) {
     $items = @('portfolio.json')
+    if (Test-Path -LiteralPath (Join-Path $data 'portfolio.en.json')) { $items += 'portfolio.en.json' }
     if (Test-Path -LiteralPath (Join-Path $data 'uploads')) { $items += 'uploads' }
     Invoke-Native { tar -czf (Join-Path $work 'data.tgz') -C $data @items } 'No se pudo empaquetar App_Data.'
     $files += (Join-Path $work 'data.tgz')

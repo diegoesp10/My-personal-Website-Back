@@ -28,7 +28,7 @@ Ejemplo de edición: `{ "language": "en", "revision": "...", "profile": { ... },
 
 Las respuestas JSON de objeto de los controladores añaden `language` y `message` sin cambiar los campos existentes. Por ejemplo, guardar responde con `message: "Content saved successfully."`; subir devuelve `url` y `message: "Image uploaded successfully."`. Las respuestas 204/304, archivos, sitemap, fragmentos HTML SEO y la descripción OpenAPI mantienen su formato. `Content-Language` indica el idioma del mensaje de operación y `X-Correlation-ID` identifica la petición en las rutas API. El ETag del portfolio distingue la variante inglesa (`-en`) de la española.
 
-`language` es metadato de transporte: no se persiste en `portfolio.json`. No traduce automáticamente el perfil, proyectos, diario, metadatos SEO ni textos originales de GitHub. Tampoco equivale a `profile.languages`, que describe los idiomas profesionales del CV.
+`language` es metadato de transporte: no se guarda dentro del contenido, pero elige qué copia se lee o se guarda. Cada idioma tiene su propio archivo con los mismos identificadores: `portfolio.json` (es) y `portfolio.en.json` (en), creados desde `seed.json` y `seed.en.json`, con su propia revisión. Los textos de cada idioma se redactan en el editor; nada se traduce automáticamente, y los textos originales de GitHub se muestran tal cual. Tampoco equivale a `profile.languages`, que describe los idiomas profesionales del CV.
 
 El cliente React añade este parámetro según el método, conserva el FormData original y acepta tanto Problem Details como el campo anterior `error`. Los errores de guardado o subida muestran su referencia para localizarla en el historial.
 

@@ -5,6 +5,6 @@ namespace Portfolio.Application.Portfolios;
 
 public interface IPortfolioService
 {
-    Task<PortfolioData> GetAsync(CancellationToken cancellationToken);
-    Task<OperationResult<PortfolioData>> SaveAsync(PortfolioData? portfolio, CancellationToken cancellationToken);
+    Task<PortfolioData> GetAsync(string language, CancellationToken cancellationToken);
+    Task<OperationResult<PortfolioData>> SaveAsync(PortfolioData? portfolio, string language, CancellationToken cancellationToken);
 }
