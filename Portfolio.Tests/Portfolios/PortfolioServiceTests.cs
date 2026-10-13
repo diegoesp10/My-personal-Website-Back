@@ -12,7 +12,7 @@ public sealed class PortfolioServiceTests
         var repository = new InMemoryPortfolioRepository(PortfolioValidatorTests.LoadSeed());
         var service = new PortfolioService(repository, new PortfolioValidator());
 
-        var result = await service.SaveAsync(repository.Current, CancellationToken.None);
+        var result = await service.SaveAsync(repository.Current, ContentLanguage.Spanish, CancellationToken.None);
 
         Assert.True(result.IsSuccess);
         Assert.NotEqual("initial", result.Value!.Revision);
@@ -25,9 +25,9 @@ public sealed class PortfolioServiceTests
         var repository = new InMemoryPortfolioRepository(PortfolioValidatorTests.LoadSeed());
         var service = new PortfolioService(repository, new PortfolioValidator());
         var stale = repository.Current;
-        await service.SaveAsync(stale, CancellationToken.None);
+        await service.SaveAsync(stale, ContentLanguage.Spanish, CancellationToken.None);
 
-        var result = await service.SaveAsync(stale, CancellationToken.None);
+        var result = await service.SaveAsync(stale, ContentLanguage.Spanish, CancellationToken.None);
 
         Assert.Equal(FailureKind.Conflict, result.Failure);
     }
@@ -39,22 +39,54 @@ public sealed class PortfolioServiceTests
         var service = new PortfolioService(repository, new PortfolioValidator());
         var invalid = repository.Current with { Profile = repository.Current.Profile with { Name = "" } };
 
-        var result = await service.SaveAsync(invalid, CancellationToken.None);
+        var result = await service.SaveAsync(invalid, ContentLanguage.Spanish, CancellationToken.None);
 
         Assert.Equal(FailureKind.Validation, result.Failure);
         Assert.Equal("initial", repository.Current.Revision);
     }
 
-    private sealed class InMemoryPortfolioRepository(PortfolioData initial) : IPortfolioRepository
+    [Fact]
+    public async Task Each_language_is_saved_and_versioned_on_its_own()
     {
-        public PortfolioData Current { get; private set; } = initial;
+        var repository = new InMemoryPortfolioRepository(PortfolioValidatorTests.LoadSeed());
+        var service = new PortfolioService(repository, new PortfolioValidator());
+        var english = PortfolioValidatorTests.LoadSeed(ContentLanguage.English);
 
-        public Task<PortfolioData> GetAsync(CancellationToken cancellationToken) => Task.FromResult(Current);
+        var result = await service.SaveAsync(english, ContentLanguage.English, CancellationToken.None);
 
-        public Task<bool> TrySaveAsync(PortfolioData portfolio, string expectedRevision, CancellationToken cancellationToken)
+        Assert.True(result.IsSuccess);
+        var saved = await service.GetAsync(ContentLanguage.English, CancellationToken.None);
+        Assert.Equal(english.Profile.Intro, saved.Profile.Intro);
+        Assert.Equal("initial", repository.Current.Revision);
+    }
+
+    [Fact]
+    public async Task Rejects_an_unsupported_language()
+    {
+        var repository = new InMemoryPortfolioRepository(PortfolioValidatorTests.LoadSeed());
+        var service = new PortfolioService(repository, new PortfolioValidator());
+
+        await Assert.ThrowsAsync<ArgumentOutOfRangeException>(() => service.GetAsync("fr", CancellationToken.None));
+    }
+
+    private sealed class InMemoryPortfolioRepository(PortfolioData spanish) : IPortfolioRepository
+    {
+        private readonly Dictionary<string, PortfolioData> _contents = new()
         {
-            if (Current.Revision != expectedRevision) return Task.FromResult(false);
-            Current = portfolio;
+            [ContentLanguage.Spanish] = spanish,
+            [ContentLanguage.English] = spanish,
+        };
+
+        public PortfolioData Current => _contents[ContentLanguage.Spanish];
+
+        public Task<PortfolioData> GetAsync(string language, CancellationToken cancellationToken)
+            => Task.FromResult(_contents[language]);
+
+        public Task<bool> TrySaveAsync(PortfolioData portfolio, string expectedRevision, string language,
+            CancellationToken cancellationToken)
+        {
+            if (_contents[language].Revision != expectedRevision) return Task.FromResult(false);
+            _contents[language] = portfolio;
             return Task.FromResult(true);
         }
     }

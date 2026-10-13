@@ -14,11 +14,14 @@ namespace Portfolio.Api.Features.Portfolios;
 [Route("api/portfolio")]
 public sealed class PortfolioController(IPortfolioService service, RequestLanguage language) : ControllerBase
 {
-    /// <summary>Public content. The revision is published as ETag so repeated visits can answer 304 Not Modified.</summary>
+    /// <summary>
+    /// Public content in the requested language (?language=, Spanish by default). The revision is published as ETag so
+    /// repeated visits can answer 304 Not Modified.
+    /// </summary>
     [HttpGet]
     public async Task<ActionResult<PortfolioData>> Get(CancellationToken cancellationToken)
     {
-        var portfolio = await service.GetAsync(cancellationToken);
+        var portfolio = await service.GetAsync(language.Value, cancellationToken);
         if (!EntityTagHeaderValue.TryParse($"\"{portfolio.Revision}{(language.Value == "en" ? "-en" : "")}\"", out var entityTag)) return Ok(portfolio);
 
         Response.Headers.CacheControl = "no-cache";
@@ -29,11 +32,12 @@ public sealed class PortfolioController(IPortfolioService service, RequestLangua
             : Ok(portfolio);
     }
 
+    /// <summary>Saves the content of the language sent in the body ("language"), leaving the other languages untouched.</summary>
     [HttpPut]
     [LocalEditorOnly]
     public async Task<ActionResult<PortfolioData>> Save([FromBody] PortfolioWriteRequest? portfolio, CancellationToken cancellationToken)
     {
-        var result = await service.SaveAsync(portfolio?.ToPortfolio(), cancellationToken);
+        var result = await service.SaveAsync(portfolio?.ToPortfolio(), language.Value, cancellationToken);
         if (result.IsSuccess) return Ok(result.Value);
         var error = new ApiError(result.Error!);
         return result.Failure == FailureKind.Conflict ? Conflict(error) : BadRequest(error);

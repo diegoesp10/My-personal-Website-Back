@@ -119,7 +119,9 @@ public sealed class GitHubActivityService(IGitHubSource source, IOptions<GitHubO
             .Select(language => new LanguageShare(language.Name, Percentage(language.Bytes, total)))
             .ToList();
         var others = totals.Skip(LanguagesShown).Sum(language => language.Bytes);
-        if (others > 0) shares.Add(new LanguageShare("Otros", Percentage(others, total)));
+        // The other shares are language names (proper nouns, not translated). This aggregate bucket is interface text,
+        // so it carries no name and the frontend labels it in the page language.
+        if (others > 0) shares.Add(new LanguageShare("", Percentage(others, total)));
         return [.. shares];
     }
 

@@ -1,5 +1,6 @@
 using System.Text.Json;
 using Portfolio.Api.Features.Errors;
+using Portfolio.Domain.Portfolios;
 using Portfolio.Errors.Catalog;
 
 namespace Portfolio.Api.Middleware;
@@ -40,12 +41,12 @@ public sealed class RequestLanguageMiddleware(RequestDelegate next)
             invalid = values.Count > 1;
             selected = values.Count == 1 ? values[0] : null;
         }
-        if (invalid || selected is not null && selected is not ("es" or "en"))
+        if (invalid || selected is not null && !ContentLanguage.IsSupported(selected))
         {
             await errors.WriteAsync(context, 400, ErrorCatalog.Get("request.language"));
             return;
         }
-        language.Value = selected ?? "es";
+        language.Value = selected ?? ContentLanguage.Default;
         await next(context);
     }
 }

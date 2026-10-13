@@ -1,0 +1,510 @@
+{
+  "revision": "initial",
+  "profile": {
+    "name": "Diego Espina Rodríguez",
+    "role": "Backend Developer · .NET / Azure",
+    "headline": ".NET backends that hold up *under real load.*",
+    "intro": "Backend developer specialised in .NET, SQL Server and the Azure ecosystem. I design APIs, integrations and business-critical logic, with asynchronous processing, measured performance and automated deployments straight from the repositories.",
+    "bio": "I design APIs from scratch with an isolated data access layer, and I have taken queries and endpoints from tens of seconds down to sub-second responses. I work with automated tests, message queues and business logic that stays consistent even when things fail.\n\nI am at home in the Microsoft Azure and Azure DevOps ecosystem: I set up CI/CD pipelines connected to the repositories to automate testing, builds and deployments. I work with Azure cloud services and storage, including Azure Blob Storage, and keep bringing these workflows into my own projects.\n\nI use Claude, by Anthropic, and Codex, by OpenAI, every day as part of my development work. I keep learning about their models and tools, try out their improvements and look at how to apply them to code. I also install and run AI models and LLMs on my own machines to learn how to manage data, configuration and inference locally.\n\nI like to understand the whole system, including what its users see. That is why I complement the backend with React and TypeScript when a project needs it, and I maintain WordPress sites in production with PHP.",
+    "personal": "Competitive league footballer and gym every day. The consistency, discipline and teamwork the pitch demands are the same ones I bring to code.",
+    "location": "Oviedo, Asturias",
+    "availability": "Remote, hybrid or on-site",
+    "languages": "Spanish (native) · English (professional)",
+    "email": "diegoespinarodriguez@gmail.com",
+    "phone": "+34 691 649 298",
+    "github": "https://github.com/diegoesp10",
+    "linkedin": "https://www.linkedin.com/in/diego-espina-rodr%C3%ADguez-747364243/",
+    "portrait": "",
+    "hasDrivingLicense": true,
+    "hasOwnVehicle": true
+  },
+  "projects": [
+    {
+      "id": "erp-solmicro-expertis",
+      "title": "ERP Solmicro Expertis",
+      "category": "ERP",
+      "description": "Rollout, maintenance and day-to-day improvement of the Expertis ERP (now Solmicro) at client sites, working directly with clients and with the vendor.",
+      "details": "It is not my product, but it is one of the pieces where I have had the most impact. During my time at Adico I worked every day on the Expertis ERP, now Solmicro: rolling it out at clients, keeping production installations healthy and improving them continuously.\n\nI built custom developments on top of the ERP for companies with databases of millions of records: calculation engines and business rules for invoicing, inventory and administrative workflows, optimisation of T-SQL queries and procedures, and integrations with external systems.\n\nThe work went both ways: direct contact with the client to understand each need and validate what was delivered, and with the ERP vendor to resolve issues and fit the developments into the product.",
+      "year": "2023 – 2025",
+      "status": "Deployed at clients",
+      "url": "",
+      "image": "",
+      "tags": [
+        "Solmicro Expertis",
+        "C#",
+        "VB.NET",
+        "SQL Server",
+        "T-SQL",
+        "Crystal Reports"
+      ],
+      "art": "erp",
+      "featured": true,
+      "highlights": [
+        "ERP rollout at clients and go-live in production",
+        "Day-to-day maintenance and improvement of installations with millions of records",
+        "Custom developments in C#, VB.NET and T-SQL on top of the ERP",
+        "Queries and reports from tens of seconds to under one second",
+        "Direct liaison with the client and with the ERP vendor"
+      ],
+      "links": [],
+      "experienceId": "adico"
+    },
+    {
+      "id": "catalogos-xml",
+      "title": "Asynchronous XML catalogue generation",
+      "category": ".NET backend",
+      "description": "Asynchronous process that reads pending jobs and generates the XML product catalogues of an international industrial client.",
+      "details": "During my time at Wembley Studios I designed and built an asynchronous process that reads pending jobs and generates from them the XML files of the product catalogues of an international industrial client.\n\nBecause it runs in the background, catalogue generation does not block the application while it is being processed.\n\nThe project belongs to the client and the company, so here I describe my part at a high level. I am happy to go into more detail in a conversation.",
+      "year": "2025 – 2026",
+      "status": "Client project",
+      "url": "",
+      "image": "",
+      "tags": [
+        "C#",
+        ".NET 8",
+        "Asynchronous processing",
+        "XML"
+      ],
+      "art": "xml",
+      "featured": true,
+      "highlights": [
+        "Design and implementation of the process",
+        "Asynchronous execution in the background",
+        "XML catalogue generation from the pending jobs"
+      ],
+      "links": [],
+      "experienceId": "wembley-studios"
+    },
+    {
+      "id": "murmur",
+      "title": "Murmur · Meeting transcriber",
+      "category": "Full stack",
+      "description": "Transcribes meetings with timestamps, tells speakers apart and writes summaries with models that run locally.",
+      "details": "A complete application to transcribe meetings without relying on paid AI APIs. You record from the browser or upload an audio or video file, follow the progress live and get a transcript with speakers that you can search, summarise and export.\n\nThe backend, in ASP.NET Core on .NET 10, receives files by streaming, queues them in SQL Server and processes them in the background: Whisper.net transcribes, pyannote Community-1 separates the speakers and Ollama writes the summaries. Progress reaches the frontend through Server-Sent Events. The frontend, Murmur, is built with React and TypeScript.",
+      "year": "2026",
+      "status": "Open source",
+      "url": "",
+      "image": "",
+      "tags": [
+        ".NET 10",
+        "ASP.NET Core",
+        "SQL Server",
+        "Whisper",
+        "Ollama",
+        "React",
+        "TypeScript",
+        "Docker"
+      ],
+      "art": "wave",
+      "featured": true,
+      "highlights": [
+        "Persistent queue in SQL Server and background processing",
+        "Real-time progress through Server-Sent Events",
+        "Diarisation of the whole meeting with stable voice identities",
+        "Summaries with decisions, tasks and references to the original segments",
+        "Local models: no OpenAI keys and no paid API usage"
+      ],
+      "links": [
+        {
+          "label": "Backend repository",
+          "url": "https://github.com/diegoesp10/Transcriptor-Back"
+        },
+        {
+          "label": "Frontend repository",
+          "url": "https://github.com/diegoesp10/Transcriptor-Front"
+        }
+      ]
+    },
+    {
+      "id": "peluqueria-lucia",
+      "title": "Peluquería Lucía Espina",
+      "category": "Full stack",
+      "description": "Public website and internal management for a hair salon: its own booking system, clients, payments and catalogue, with ASP.NET Core 10 and SQL Server.",
+      "details": "A project in development for the eco-friendly hair salon Peluquería Ecológica Lucía Espina. A single application brings together the salon's public website and a private back office to manage the daily work.\n\nThe dashboard lets the salon look up clients and their history, record visits and services, take payments in cash, by card or both, print receipts and export the selected period to Excel. Price changes in the catalogue keep the amounts of earlier visits.\n\nThe built-in booking system shows availability and lets clients request appointments, prepare proposals and confirm them through private links that expire. It includes an email queue and prepares WhatsApp messages to be sent manually; the client's acceptance is a separate step. SMTP configuration is still pending before sending is switched on.\n\nThe back office requires a password and Microsoft Authenticator, with recovery codes, revocable sessions and CSRF protection. Reviews are verified against receipts and moderated from the dashboard.\n\nLayered architecture: Domain, Application, Infrastructure and Web. ASP.NET Core MVC with Razor views, Entity Framework Core and SQL Server; independent libraries for email and WhatsApp. Program.cs only handles start-up, and dependency composition is organised in Startup.cs and per-feature configuration.",
+      "year": "2026",
+      "status": "In development",
+      "url": "",
+      "image": "",
+      "tags": [
+        ".NET 10",
+        "ASP.NET Core MVC",
+        "SQL Server",
+        "Entity Framework Core",
+        "Razor",
+        "MFA",
+        "ClosedXML"
+      ],
+      "art": "salon",
+      "featured": false,
+      "highlights": [
+        "Management of clients, visits and service history",
+        "Cash, card or split payments, receipts and Excel export",
+        "Built-in booking with availability and appointment confirmation through private links",
+        "Back office with MFA and revocable sessions",
+        "Catalogue shared by the public website and the dashboard; historical prices preserved",
+        "Layered architecture and independent messaging libraries"
+      ],
+      "links": [],
+      "experienceId": ""
+    },
+    {
+      "id": "bills-engine",
+      "title": "Subscription Billing Engine",
+      "category": ".NET backend",
+      "description": "Billing engine for subscriptions: amounts, currencies, exact allocation and accounting rounding, covered by tests.",
+      "details": "A domain core for billing subscriptions in .NET 10, built so that the money always adds up.\n\nIt models amounts and currencies as value objects, splits quantities without losing minor units and applies explicit accounting rounding rules. The critical behaviour of the domain is covered by unit tests in xUnit.",
+      "year": "2026",
+      "status": "Open source",
+      "url": "",
+      "image": "",
+      "tags": [
+        ".NET 10",
+        "C#",
+        "Domain design",
+        "xUnit"
+      ],
+      "art": "ledger",
+      "featured": false,
+      "highlights": [
+        "Value objects for amounts and currencies",
+        "Exact allocation of amounts without losing minor units",
+        "Explicit accounting rounding rules",
+        "Unit tests in xUnit over the domain"
+      ],
+      "links": [
+        {
+          "label": "Repository",
+          "url": "https://github.com/diegoesp10/Bills-Engine"
+        }
+      ]
+    },
+    {
+      "id": "portfolio",
+      "title": "diegoespinarodriguez.com",
+      "category": "Full stack",
+      "description": "Design, development and release of my portfolio: .NET 10 and React on an Azure Linux VM, with Docker, CI/CD and deployments over SSH.",
+      "details": "A personal website can also show how I work: from separation of concerns in the code to delivering and running software in production. Here I bring backend, frontend, infrastructure and automation together in a system that I build and maintain.\n\nI have organised the project into two repositories and two Docker images, deployed on the same Azure virtual machine. Releases connect GitHub Actions, GHCR, SSH and Docker Compose, with checks beforehand, a protected main branch, production approval and recovery of the previous image if a deployment fails.",
+      "year": "2026",
+      "status": "Evolving",
+      "url": "",
+      "image": "",
+      "tags": [
+        ".NET 10",
+        "ASP.NET Core",
+        "React 19",
+        "TypeScript",
+        "Azure VM",
+        "Linux",
+        "Docker Compose",
+        "GitHub Actions",
+        "CI/CD",
+        "GHCR",
+        "SSH",
+        "Nginx",
+        "Cloudflare Tunnel"
+      ],
+      "art": "orange",
+      "featured": false,
+      "highlights": [
+        "Layered architecture and explicit dependency injection",
+        "Frontend and backend in separate repositories and images",
+        "Ubuntu VM on Azure and a stack coordinated with Docker Compose",
+        "Continuous integration on pull requests and automatic release when main is updated",
+        "Protected main branch and approval before production deployments",
+        "Images identified by commit and deployed by immutable digest",
+        "SSH credentials in GitHub secrets and short-lived registry tokens",
+        "Shared lock, HTTP checks and recovery of the previous image",
+        "Persistent volume for content, images, statistics and errors",
+        "Error catalogue, correlation and a private history with messages in Spanish and English"
+      ],
+      "links": [
+        {
+          "label": "Frontend repository",
+          "url": "https://github.com/diegoesp10/My-Personal-WebSite"
+        },
+        {
+          "label": "Backend repository",
+          "url": "https://github.com/diegoesp10/My-personal-Website-Back"
+        }
+      ],
+      "sections": [
+        {
+          "title": "End-to-end design and architecture",
+          "text": "I have built and deployed this website as a complete project: experience design, frontend, API, persistence and production operations. I keep the frontend and the backend in separate repositories, each with its own Dockerfile, checks and release cycle.\n\nThe API uses ASP.NET Core 10 and separates Domain, Application, Infrastructure and API. Program.cs handles start-up; Startup.cs composes services and middleware through explicit extensions. Business rules, validation, repositories and external clients are connected through contracts and dependency injection. The frontend uses React 19, TypeScript and Vite and is served by Nginx."
+        },
+        {
+          "title": "Azure: a Linux VM as the runtime platform",
+          "text": "Production is hosted on an Ubuntu virtual machine on Azure, size B2ats_v2 with x86-64 architecture. I prepared the Linux environment to run Docker and Docker Compose and keep the project stack in a dedicated deployment folder.\n\nThe API, web and Cloudflare Tunnel containers live on the same VM. Frontend and backend are two independent images, coordinated by Compose and a shared Docker network. This lets me update one service without rebuilding the other and keep the data between versions."
+        },
+        {
+          "title": "Containers and persistence",
+          "text": "The backend Dockerfile builds and publishes the API in a build stage with the .NET 10 SDK. The final image uses the ASP.NET Core runtime on Alpine and runs the application as an unprivileged user. On the frontend, another multi-stage build produces the React files and hands them to Nginx.\n\nThe api and web services run with a read-only file system, no additional Linux capabilities and no-new-privileges. Internal traffic goes through diego-portfolio-net. The diego-portfolio-data volume keeps the portfolio content, uploaded images, statistics and error history: these files are not packaged into the images and are not replaced when code is released."
+        },
+        {
+          "title": "Domain and access through Cloudflare Tunnel",
+          "text": "Cloudflare manages diegoespinarodriguez.com and its www variant. The cloudflared container opens the outbound tunnel and routes traffic to web:8080 inside the Docker network. Nginx serves React and forwards API requests to the api service.\n\nOn the server, the website is only published on the VM's loopback; public visits arrive through the tunnel. SSH is used for administration and releases. The tunnel token stays in the server's private configuration. Proxy headers make it possible to identify the client for rate limiting and to feed the aggregated statistics."
+        },
+        {
+          "title": "One continuous integration process per repository",
+          "text": "Each repository contains its own GitHub Actions workflow. Pull requests targeting main run the checks before merging. A change merged into main automatically starts the same validation and, if it passes, builds and publishes the image. There is also a manual run for controlled operations.\n\nOn the backend, dependencies are restored, .NET is built and unit tests and integration tests run against a real API with isolated data. On the frontend, dependencies are installed with npm ci and TypeScript and the Vite build are verified. Both workflows check the deployment scripts and their recovery scenarios. External actions are pinned to specific commits to control which version runs."
+        },
+        {
+          "title": "Protected main and production approval",
+          "text": "I work on develop and bring changes into main through pull requests. GitHub rules require the repository checks before merging and block direct pushes, deleting main and rewriting its history. A local hook adds a confirmation before each push and rejects direct pushes to main.\n\nAfter the merge, the pipeline publishes the artefact, but the deployment job waits for my approval in the production environment. The environment restricts releases to main and requires a reviewer, without letting administrators bypass the protection. Before deploying, a script checks that the approval is configured and that the approved commit is still the current main. They are two separate decisions: integrating the change and authorising it into production."
+        },
+        {
+          "title": "Traceable images in GitHub Container Registry",
+          "text": "Images are built for linux/amd64 and published to GitHub Container Registry, one for api and one for web. Each version carries the commit SHA and labels that identify its repository and revision.\n\nThe deployment pulls the image by its immutable SHA-256 digest. That way the VM runs the artefact built for that commit, and it is possible to tell which version has reached production. The local Compose tag is updated after pulling the digest; nothing is built on the server and no branch that could change during the deployment is pulled."
+        },
+        {
+          "title": "Releases over SSH and credential management",
+          "text": "The release connection uses a dedicated SSH key and strict host key verification. The host, user, private key and known_hosts are stored as secrets of the GitHub production environment; their values are not part of the repository. The matching public key is authorised on the VM.\n\nGitHub Actions provides a short-lived GITHUB_TOKEN with write access to packages for publishing and read access for deploying. The pull on the VM receives the token through SSH standard input and docker login uses password-stdin. The runner's and Docker's temporary credentials are removed at the end. The tunnel token and the server's private configuration are kept separately."
+        },
+        {
+          "title": "Deployment, checks and recovery",
+          "text": "Both repositories acquire the same lock on the VM so that their deployments never change the stack at the same time. The script validates the service, repository, commit and image reference before continuing. It keeps the previous image and recreates only api or web with Docker Compose, leaving the volumes and the rest of the stack untouched.\n\nIt then waits for the container to be healthy and checks both /healthz and /api/health through Nginx. If the update fails after the image has been switched, it tries to restore the previous version, recreates the service and repeats the checks. The run is marked as failed so it can be reviewed. Every completed deployment records the commit, digest, date and the reference of the previous image."
+        },
+        {
+          "title": "Content, observability and maintenance",
+          "text": "Professional content is managed from an editor that is only available in Development and from the local machine. The API validates the data and uses a revision to detect concurrent edits; ETag allows reads to be revalidated. The GitHub integration includes caching and a degraded result when the external service does not respond.\n\nPortfolio.Errors centralises error codes and messages. The API returns structured error responses with HTTP status, language and correlation; the private history is persisted in the volume and read from the protected editor. Content and operation and error messages are available in Spanish and English through language.\n\nI keep code releases separate from content maintenance. The volume is preserved when images are updated and has its own backup process. Before replacing data on the server I prepare a backup and review the operation. The JSON persistence is designed for a single instance; moving to several replicas would mean taking those contracts to a database and shared storage."
+        }
+      ]
+    },
+    {
+      "id": "mijares",
+      "title": "Mijares Abogados",
+      "category": "WordPress",
+      "description": "Publishing, updating and maintaining the live website of a law firm in Oviedo.",
+      "details": "Production WordPress site of Mijares Abogados, a law firm based in Oviedo.\n\nI take care of publishing, updating and maintaining it: content changes and design and functionality adjustments on a site that is live.",
+      "year": "",
+      "status": "In production",
+      "url": "https://www.mijaresabogados.es",
+      "image": "",
+      "tags": [
+        "WordPress",
+        "PHP",
+        "CSS",
+        "Web maintenance"
+      ],
+      "art": "ink",
+      "featured": true,
+      "highlights": [
+        "WordPress site in production",
+        "Publishing and adapting content",
+        "Design and functionality adjustments",
+        "Site maintenance"
+      ],
+      "links": []
+    },
+    {
+      "id": "syncforge",
+      "title": "SyncForge",
+      "category": ".NET backend",
+      "description": "Platform to upload, process and query documents with an AI assistant, two-step authentication and storage on Azure.",
+      "details": "My own product, in development. A layered .NET backend receives files (PDF, Word, Excel and images), processes them and lets users query them with an AI assistant that cites its sources, using local models through Ollama and a selectable catalogue of providers.\n\nIt includes two-step authentication with Microsoft Authenticator and recovery codes, licences with token usage limits and storage in Azure Blob Storage. The frontend is built with React 19, TypeScript and Vite.\n\nThe code is private; I can show it in an interview.",
+      "year": "2026",
+      "status": "In development · private code",
+      "url": "",
+      "image": "",
+      "tags": [
+        ".NET",
+        "ASP.NET Core",
+        "SQL Server",
+        "Azure Blob Storage",
+        "Ollama",
+        "MFA",
+        "React"
+      ],
+      "art": "grid",
+      "featured": false,
+      "highlights": [
+        "AI assistant over documents with cited sources",
+        "Two-step authentication (TOTP) and recovery codes",
+        "Licences with token usage limits",
+        "File storage in Azure Blob Storage"
+      ],
+      "links": []
+    }
+  ],
+  "experience": [
+    {
+      "id": "wembley-studios",
+      "role": "Backend Developer (.NET)",
+      "company": "Wembley Studios",
+      "companyUrl": "",
+      "start": "2025-10",
+      "end": "2026-05",
+      "location": "100% remote",
+      "summary": "Backend in C# and .NET 8 on business domains with dense rules, from design to production support.",
+      "highlights": [
+        "Asynchronous process generating XML product catalogues for an international industrial client.",
+        "Design and implementation from scratch of more than 25 REST endpoints with chained validations, state machines and edge cases solved without breaking contracts already in production.",
+        "Redesign of the data access layer, isolating it from the rest of the application: asynchronous queries, DTO projections, pagination and removal of N+1 queries. Endpoints that took more than 30 seconds now respond in under 1 second.",
+        "Integrations with third-party systems and APIs through message queues, retries and idempotency, so that processes were repeatable and consistent in the face of failures, timeouts or partial responses.",
+        "Unit and integration tests on the business logic and critical endpoints, run in the pipeline on every delivery.",
+        "Full cycle on Azure and Azure DevOps: CI/CD pipelines, deployments to QA and production, and diagnosis of production incidents.",
+        "Internal R&D project: an AI-based agent to automate recurring queries and tasks on Azure DevOps."
+      ],
+      "stack": [
+        "C#",
+        ".NET 8",
+        "ASP.NET Core",
+        "Entity Framework Core",
+        "LINQ",
+        "SQL Server",
+        "Message queues",
+        "xUnit",
+        "Azure",
+        "Azure DevOps",
+        "CI/CD"
+      ]
+    },
+    {
+      "id": "adico",
+      "role": "Software Developer / ERP",
+      "company": "Adico · Asturiana de Desarrollos Informáticos y Comunicaciones",
+      "companyUrl": "",
+      "start": "2023-04",
+      "end": "2025-09",
+      "location": "Oviedo · on-site",
+      "summary": "Custom development on the Solmicro Expertis ERP for clients with databases of millions of records.",
+      "highlights": [
+        "ERP rollout at clients, plus day-to-day maintenance and improvement, working directly with the client and the vendor.",
+        "Calculation engines and business rules for invoicing, inventory and administrative workflows in production.",
+        "Optimisation of T-SQL queries and procedures: reviewing execution plans, tuning indexes and rewriting queries, bringing processes and reports from tens of seconds down to under one second.",
+        "Integration and synchronisation between the ERP and external systems, keeping the data consistent when any of the parties failed.",
+        "Automation of invoicing, inventory and reporting processes that used to be manual.",
+        "Functional analysis and direct work with the client: requirements, validation of what was delivered and resolution of critical incidents.",
+        "Data analysis and reports with Crystal Reports for operational insight."
+      ],
+      "stack": [
+        "C#",
+        ".NET",
+        "VB.NET",
+        "SQL Server",
+        "T-SQL",
+        "MySQL",
+        "Solmicro Expertis",
+        "Crystal Reports"
+      ]
+    }
+  ],
+  "education": [
+    {
+      "id": "daw",
+      "title": "Higher Technical Diploma in Web Application Development (DAW)",
+      "center": "IES Monte Naranco",
+      "location": "Oviedo",
+      "start": "2020",
+      "end": "2023"
+    }
+  ],
+  "skills": [
+    {
+      "id": "lenguajes",
+      "title": "Languages and frameworks",
+      "description": "The ecosystem I work in every day.",
+      "tags": [
+        "C#",
+        ".NET 8 / 10",
+        "ASP.NET Core",
+        "Web API",
+        "Entity Framework Core",
+        "LINQ"
+      ]
+    },
+    {
+      "id": "datos",
+      "title": "Data and performance",
+      "description": "Queries that answer in under a second over millions of records.",
+      "tags": [
+        "SQL Server",
+        "T-SQL",
+        "Stored procedures",
+        "Indexes and execution plans",
+        "MySQL / MariaDB"
+      ]
+    },
+    {
+      "id": "arquitectura",
+      "title": "Backend architecture",
+      "description": "APIs with stable contracts and processes that do not lose data when something fails.",
+      "tags": [
+        "REST APIs",
+        "Layered architecture",
+        "SOLID",
+        "Asynchronous processing",
+        "Message queues",
+        "Idempotency"
+      ]
+    },
+    {
+      "id": "calidad",
+      "title": "Quality and testing",
+      "description": "Tests in the pipeline so that each delivery does not break the previous one.",
+      "tags": [
+        "xUnit",
+        "Integration tests",
+        "Production diagnostics"
+      ]
+    },
+    {
+      "id": "cloud",
+      "title": "Azure and automated deployments",
+      "description": "Azure DevOps pipelines connected to the repositories to automate testing, builds and deployment. I work with the Azure cloud and its storage, and apply these workflows to my own projects.",
+      "tags": [
+        "Azure",
+        "Azure DevOps",
+        "Azure Pipelines",
+        "CI/CD",
+        "Azure Blob Storage",
+        "Docker",
+        "IIS",
+        "Windows / Linux Server"
+      ]
+    },
+    {
+      "id": "ia-aplicada",
+      "title": "Applied AI and continuous learning",
+      "description": "Claude and Codex every day: I try out the improvements from Anthropic and OpenAI and bring them into my work. I install LLMs on my machines to learn how to manage data and run models locally.",
+      "tags": [
+        "Claude · Anthropic",
+        "Codex · OpenAI",
+        "Local LLMs",
+        "Ollama",
+        "Local inference",
+        "Data management"
+      ]
+    },
+    {
+      "id": "integraciones",
+      "title": "Integrations and web",
+      "description": "Connecting systems and finishing the product on the front end when needed.",
+      "tags": [
+        "Third-party APIs",
+        "Meta / WhatsApp Business API",
+        "React",
+        "TypeScript",
+        "WordPress",
+        "PHP"
+      ]
+    }
+  ],
+  "entries": [
+    {
+      "id": "una-web-con-backend-propio",
+      "title": "Why my website has its own backend",
+      "date": "2026-10-12",
+      "category": "Building",
+      "text": "A personal website could be a static HTML page. I preferred to treat it as one more project, with the same decisions I would make in a real product.\n\nThe API is split into Domain, Application, Infrastructure and API. Controllers only translate HTTP; the rules live in services and persistence in repositories. Content is stored with a revision number, so two simultaneous edits never overwrite each other, and that same revision works as an ETag so the browser does not download what it already has.\n\nThe GitHub section queries the public API with an in-memory cache. If GitHub fails or rate-limits the requests, the last valid result is served and there is no retry loop. The frontend and the API live in separate repositories and containers, without a root user and with a read-only file system."
+    },
+    {
+      "id": "lo-que-me-llevo-del-campo",
+      "title": "What I bring from the pitch to code",
+      "date": "2026-10-11",
+      "category": "Personal",
+      "text": "I play competitive league football and train at the gym every day. Away from the screen there is method too.\n\nFrom the pitch I take the consistency of repeating the basics well, the discipline of preparing before it is needed and the idea that the team matters more than the individual play. In code that means tests before deploying, measuring before optimising and leaving work that is easy to understand for whoever comes next."
+    }
+  ],
+  "metrics": []
+}

@@ -18,7 +18,7 @@ public sealed class SeoServiceTests
         var page = await Get(seed, "/");
 
         Assert.StartsWith(seed.Profile.Name + " — ", page.Title);
-        Assert.Equal(Root + "/", page.Url);
+        Assert.Equal(Root + "/es", page.Url);
         Assert.True(page.Indexable);
         Assert.Equal(Root + "/og-image.png", page.Image);
         Assert.DoesNotContain("*", page.Description);
@@ -40,7 +40,9 @@ public sealed class SeoServiceTests
         var page = await Get(seed, "/proyectos/?utm_source=linkedin");
 
         Assert.Equal("Proyectos · " + seed.Profile.Name, page.Title);
-        Assert.Equal(Root + "/proyectos", page.Url);
+        Assert.Equal(Root + "/es/proyectos", page.Url);
+        Assert.Equal("es", page.Language);
+        Assert.Equal("es_ES", page.Locale);
         var trail = Node(page, "BreadcrumbList")["itemListElement"]!.AsArray();
         Assert.Equal(["Inicio", "Proyectos"], trail.Select(item => (string?)item!["name"]));
     }
@@ -53,7 +55,7 @@ public sealed class SeoServiceTests
         var page = await Get(seed with { Projects = [project] }, "/proyectos/mi proyecto");
 
         Assert.Equal(project.Title + " · " + seed.Profile.Name, page.Title);
-        Assert.Equal(Root + "/proyectos/mi%20proyecto", page.Url);
+        Assert.Equal(Root + "/es/proyectos/mi%20proyecto", page.Url);
         Assert.Equal("article", page.Type);
         Assert.Equal(Root + "/uploads/0a1b2c.webp", page.Image);
         Assert.Equal(project.Title, page.ImageAlt);
@@ -100,7 +102,7 @@ public sealed class SeoServiceTests
 
         Assert.True(page.Indexable);
         Assert.Equal(name + " · " + seed.Profile.Name, page.Title);
-        Assert.Equal(Root + path, page.Url);
+        Assert.Equal(Root + "/es" + path, page.Url);
         Assert.DoesNotContain(seed.Profile.Intro, page.Description);
         var trail = Node(page, "BreadcrumbList")["itemListElement"]!.AsArray();
         Assert.Equal(["Inicio", name], trail.Select(item => (string?)item!["name"]));
@@ -114,7 +116,7 @@ public sealed class SeoServiceTests
         var page = await Get(seed, "/legal/");
 
         Assert.True(page.Indexable);
-        Assert.Equal(Root + "/legal/aviso-legal", page.Url);
+        Assert.Equal(Root + "/es/legal/aviso-legal", page.Url);
     }
 
     [Theory]
@@ -123,6 +125,8 @@ public sealed class SeoServiceTests
     [InlineData("/legal/no-existe", "No encontrado")]
     [InlineData("/editor", "Editor")]
     [InlineData("/error?code=network&status=0", "Error")]
+    [InlineData("/en/no-existe", "Not found")]
+    [InlineData("/en/error", "Error")]
     public async Task Unknown_routes_and_utility_pages_are_not_indexed(string path, string name)
     {
         var seed = PortfolioValidatorTests.LoadSeed();
@@ -132,7 +136,54 @@ public sealed class SeoServiceTests
         Assert.False(page.Indexable);
         Assert.Null(page.Url);
         Assert.Null(page.StructuredData);
+        Assert.Empty(page.Alternates);
         Assert.Equal(name + " · " + seed.Profile.Name, page.Title);
+    }
+
+    [Fact]
+    public async Task English_pages_use_the_english_content_and_link_their_translation()
+    {
+        var english = PortfolioValidatorTests.LoadSeed(ContentLanguage.English);
+
+        var page = await Get(PortfolioValidatorTests.LoadSeed(), "/en/proyectos/", english);
+
+        Assert.Equal("Projects · " + english.Profile.Name, page.Title);
+        Assert.StartsWith("Projects by ", page.Description);
+        Assert.Equal(Root + "/en/proyectos", page.Url);
+        Assert.Equal("en", page.Language);
+        Assert.Equal("en_US", page.Locale);
+        Assert.Equal(
+            [("es", Root + "/es/proyectos"), ("en", Root + "/en/proyectos"), ("x-default", Root + "/es/proyectos")],
+            page.Alternates.Select(item => (item.Language, item.Url)));
+        var trail = Node(page, "BreadcrumbList")["itemListElement"]!.AsArray();
+        Assert.Equal(["Home", "Projects"], trail.Select(item => (string?)item!["name"]));
+        Assert.Equal("en-US", (string?)Node(page, "CollectionPage")["inLanguage"]);
+    }
+
+    [Fact]
+    public async Task English_home_reads_the_english_profile()
+    {
+        var english = PortfolioValidatorTests.LoadSeed(ContentLanguage.English);
+
+        var page = await Get(PortfolioValidatorTests.LoadSeed(), "/en", english);
+
+        Assert.Equal(Root + "/en", page.Url);
+        Assert.Equal(SeoService.Summarize(english.Profile.Intro), page.Description);
+        Assert.Equal(SeoService.Summarize(english.Profile.Intro), (string?)Node(page, "Person")["description"]);
+    }
+
+    [Fact]
+    public async Task A_project_missing_in_a_language_only_links_the_languages_that_have_it()
+    {
+        var seed = PortfolioValidatorTests.LoadSeed();
+        var english = PortfolioValidatorTests.LoadSeed(ContentLanguage.English) with { Projects = [] };
+
+        var spanish = await Get(seed, "/es/proyectos/" + seed.Projects[0].Id, english);
+        var missing = await Get(seed, "/en/proyectos/" + seed.Projects[0].Id, english);
+
+        Assert.Equal(["es", "x-default"], spanish.Alternates.Select(item => item.Language));
+        Assert.False(missing.Indexable);
+        Assert.Equal("Not found · " + english.Profile.Name, missing.Title);
     }
 
     [Fact]
@@ -156,17 +207,20 @@ public sealed class SeoServiceTests
     public void Normalizes_paths(string? path, string expected)
         => Assert.Equal(expected, SeoService.NormalizePath(path));
 
-    private static Task<PageMetadata> Get(PortfolioData portfolio, string path)
-        => new SeoService(new FixedRepository(portfolio)).GetPageAsync(path, Site, CancellationToken.None);
+    private static Task<PageMetadata> Get(PortfolioData portfolio, string path, PortfolioData? english = null)
+        => new SeoService(new FixedRepository(portfolio, english ?? portfolio))
+            .GetPageAsync(path, Site, CancellationToken.None);
 
     private static JsonObject Node(PageMetadata page, string type)
         => page.StructuredData!["@graph"]!.AsArray().OfType<JsonObject>().Single(node => (string?)node["@type"] == type);
 
-    private sealed class FixedRepository(PortfolioData portfolio) : IPortfolioRepository
+    private sealed class FixedRepository(PortfolioData spanish, PortfolioData english) : IPortfolioRepository
     {
-        public Task<PortfolioData> GetAsync(CancellationToken cancellationToken) => Task.FromResult(portfolio);
+        public Task<PortfolioData> GetAsync(string language, CancellationToken cancellationToken)
+            => Task.FromResult(language == ContentLanguage.English ? english : spanish);
 
-        public Task<bool> TrySaveAsync(PortfolioData portfolio, string expectedRevision, CancellationToken cancellationToken)
+        public Task<bool> TrySaveAsync(PortfolioData portfolio, string expectedRevision, string language,
+            CancellationToken cancellationToken)
             => Task.FromResult(false);
     }
 }
