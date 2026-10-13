@@ -14,7 +14,7 @@ public sealed class LocalEditorAccess(IWebHostEnvironment environment, IHttpCont
             && options.Value.AllowedHosts.Contains(context.Request.Host.Host, StringComparer.OrdinalIgnoreCase);
     }
 
-    public bool CanWrite()
+    public bool CanAccessProtectedEndpoints()
     {
         if (!IsAvailable()) return false;
         var request = accessor.HttpContext!.Request;

@@ -1,3 +1,4 @@
+using Portfolio.Errors.Registry;
 using System.Net;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
@@ -147,17 +148,43 @@ public sealed class VisitTrackerTests
         Assert.DoesNotContain(Madrid.ToString(), System.Text.Json.JsonSerializer.Serialize(store.Stats));
     }
 
+    [Fact]
+    public async Task Failed_flush_is_registered_and_dirty_counts_are_retried()
+    {
+        var store = new MemoryStore { Fail = true };
+        var reporter = new RecordingReporter();
+        var (tracker, _, _) = Create(store: store, reporter: reporter);
+        await tracker.RecordAsync(Visit(Madrid, "/"), CancellationToken.None);
+        await tracker.FlushAsync(CancellationToken.None);
+        var failure = Assert.Single(reporter.Entries);
+        Assert.Equal("visitors.persistence", failure.Code);
+        Assert.Null(failure.Status);
+        Assert.Equal("background", failure.Source);
+        Assert.Equal("System.IO.IOException", failure.ExceptionType);
+        Assert.DoesNotContain("do-not-record", System.Text.Json.JsonSerializer.Serialize(failure));
+        store.Fail = false;
+        await tracker.FlushAsync(CancellationToken.None);
+        Assert.Equal(1, store.Saves);
+        Assert.Equal(1, store.Stats!.Visits);
+    }
+
+    private sealed class RecordingReporter : IErrorReporter
+    {
+        public List<ErrorRecord> Entries { get; } = [];
+        public Task ReportAsync(ErrorRecord entry) { Entries.Add(entry); return Task.CompletedTask; }
+    }
+
     private static VisitRequest Visit(IPAddress address, string path) => new(address, path, null, Browser, false, null);
 
     private static (VisitTracker Tracker, ManualClock Clock, FakeLocator Locator) Create(
-        Action<VisitorOptions>? configure = null, MemoryStore? store = null)
+        Action<VisitorOptions>? configure = null, MemoryStore? store = null, RecordingReporter? reporter = null)
     {
         var options = new VisitorOptions();
         configure?.Invoke(options);
         var clock = new ManualClock(Now);
         var locator = new FakeLocator();
         var tracker = new VisitTracker(store ?? new MemoryStore(), locator, Options.Create(options), clock,
-            NullLogger<VisitTracker>.Instance);
+            NullLogger<VisitTracker>.Instance, reporter ?? new RecordingReporter());
         return (tracker, clock, locator);
     }
 
@@ -184,11 +211,13 @@ public sealed class VisitTrackerTests
     {
         public VisitorStats? Stats { get; private set; }
         public int Saves { get; private set; }
+        public bool Fail { get; set; }
 
         public Task<VisitorStats?> LoadAsync(CancellationToken cancellationToken) => Task.FromResult(Stats);
 
         public Task SaveAsync(VisitorStats stats, CancellationToken cancellationToken)
         {
+            if (Fail) throw new IOException("do-not-record");
             Stats = stats;
             Saves++;
             return Task.CompletedTask;

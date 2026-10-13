@@ -1,6 +1,8 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Portfolio.Application.GitHub;
+using Portfolio.Application.Errors;
+using Portfolio.Errors.Registry;
 using Portfolio.Application.Images;
 using Portfolio.Application.Portfolios;
 using Portfolio.Application.Seo;
@@ -33,6 +35,7 @@ public static class DependencyInjection
                 "Revisa los límites de consulta de GitHub.")
             .ValidateOnStart();
         services.AddSingleton(TimeProvider.System);
+        services.AddSingleton<IErrorReporter, ErrorReporter>();
         // Singleton: keeps the cached summary and coordinates a single refresh at a time.
         services.AddSingleton<IGitHubActivityService, GitHubActivityService>();
 

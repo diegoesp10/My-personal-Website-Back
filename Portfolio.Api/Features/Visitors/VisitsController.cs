@@ -2,11 +2,9 @@ using System.Globalization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Portfolio.Application.Visitors;
+using Portfolio.Api.Contracts.Requests;
 
 namespace Portfolio.Api.Features.Visitors;
-
-/// <summary>Page view sent by the browser with navigator.sendBeacon.</summary>
-public sealed record VisitBeacon(string? Path, string? Referrer);
 
 [ApiController]
 public sealed class VisitsController(IVisitTracker tracker) : ControllerBase

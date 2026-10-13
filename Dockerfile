@@ -5,12 +5,14 @@ COPY global.json Directory.Build.props ./
 COPY Portfolio.Api/Portfolio.Api.csproj Portfolio.Api/
 COPY Portfolio.Application/Portfolio.Application.csproj Portfolio.Application/
 COPY Portfolio.Domain/Portfolio.Domain.csproj Portfolio.Domain/
+COPY Portfolio.Errors/Portfolio.Errors.csproj Portfolio.Errors/
 COPY Portfolio.Infrastructure/Portfolio.Infrastructure.csproj Portfolio.Infrastructure/
 RUN dotnet restore Portfolio.Api/Portfolio.Api.csproj
 COPY seed.json ./
 COPY Portfolio.Api/ Portfolio.Api/
 COPY Portfolio.Application/ Portfolio.Application/
 COPY Portfolio.Domain/ Portfolio.Domain/
+COPY Portfolio.Errors/ Portfolio.Errors/
 COPY Portfolio.Infrastructure/ Portfolio.Infrastructure/
 RUN dotnet publish Portfolio.Api/Portfolio.Api.csproj --no-restore -c Release -o /out /p:UseAppHost=false
 

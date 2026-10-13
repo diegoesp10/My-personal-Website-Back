@@ -1,3 +1,4 @@
+using Portfolio.Errors.Catalog;
 using Portfolio.Application.Common;
 
 namespace Portfolio.Application.Images;
@@ -5,7 +6,7 @@ namespace Portfolio.Application.Images;
 public sealed class ImageService(IImageRepository repository, IImageValidator validator) : IImageService
 {
     private const int MaximumBytes = 8 * 1024 * 1024;
-    private const string SizeError = "La imagen debe ocupar entre 1 byte y 8 MB.";
+    private static readonly string SizeError = ErrorCatalog.Get("image.size").Message();
 
     public Task<StoredImage?> GetAsync(string fileName, CancellationToken cancellationToken)
         => repository.OpenReadAsync(fileName, cancellationToken);
@@ -26,7 +27,7 @@ public sealed class ImageService(IImageRepository repository, IImageValidator va
         var bytes = memory.ToArray();
         if (bytes.Length == 0) return OperationResult<UploadedImage>.Invalid(SizeError);
         var format = validator.DetectFormat(bytes);
-        if (format is null) return OperationResult<UploadedImage>.Invalid("Formato no permitido. Utiliza PNG, JPEG o WebP.");
+        if (format is null) return OperationResult<UploadedImage>.Invalid(ErrorCatalog.Get("image.format").Message());
 
         var fileName = await repository.SaveAsync(bytes, format, cancellationToken);
         return OperationResult<UploadedImage>.Success(new UploadedImage(fileName));

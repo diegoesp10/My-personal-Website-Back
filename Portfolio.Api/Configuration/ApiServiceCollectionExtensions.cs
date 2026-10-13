@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Portfolio.Api.Contracts;
 using Portfolio.Api.Features.Editor;
+using Portfolio.Api.Features.Errors;
 
 namespace Portfolio.Api.Configuration;
 
@@ -10,12 +11,13 @@ public static class ApiServiceCollectionExtensions
     public static IServiceCollection AddApi(this IServiceCollection services, IConfiguration configuration)
     {
         services.Configure<KestrelServerOptions>(options => options.Limits.MaxRequestBodySize = 9 * 1024 * 1024);
-        services.AddControllers().ConfigureApiBehaviorOptions(options =>
+        services.AddApiErrorHandling();
+        services.AddControllers(options => options.Filters.AddService<ApiResponseResultFilter>()).ConfigureApiBehaviorOptions(options =>
             options.InvalidModelStateResponseFactory = _ => new BadRequestObjectResult(new ApiError("La solicitud no es válida.")));
         services.AddHttpContextAccessor();
         services.AddOptions<LocalEditorOptions>().Bind(configuration.GetSection(LocalEditorOptions.SectionName));
         services.AddScoped<ILocalEditorAccess, LocalEditorAccess>();
-        services.AddScoped<LocalEditorWriteFilter>();
+        services.AddScoped<LocalEditorAccessFilter>();
 
         services.AddOptions<SiteOptions>()
             .Bind(configuration.GetSection(SiteOptions.SectionName))

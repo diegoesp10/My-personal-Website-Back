@@ -7,6 +7,7 @@ using Portfolio.Application.Images;
 using Portfolio.Application.Portfolios;
 using Portfolio.Application.Visitors;
 using Portfolio.Infrastructure.GitHub;
+using Portfolio.Infrastructure.Errors;
 using Portfolio.Infrastructure.Images;
 using Portfolio.Infrastructure.Portfolios;
 using Portfolio.Infrastructure.Storage;
@@ -32,6 +33,7 @@ public static class DependencyInjection
         services.AddHostedService<FileStorageInitializer>();
         services.AddGitHub(configuration);
         services.AddVisitors(configuration);
+        services.AddErrorPersistence(configuration);
         return services;
     }
 

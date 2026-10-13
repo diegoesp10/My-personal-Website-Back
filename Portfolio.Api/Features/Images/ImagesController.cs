@@ -19,8 +19,8 @@ public sealed class ImagesController(IImageService service) : ControllerBase
     }
 
     [HttpPost("api/uploads")]
-    [LocalEditorWrite]
-    public async Task<IActionResult> Upload(CancellationToken cancellationToken)
+    [LocalEditorOnly]
+    public async Task<IActionResult> Upload(CancellationToken cancellationToken, [FromForm] string? language = null)
     {
         if (!Request.HasFormContentType) return BadRequest(new ApiError("Selecciona una imagen."));
         var form = await Request.ReadFormAsync(cancellationToken);

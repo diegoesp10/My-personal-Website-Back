@@ -1,3 +1,4 @@
+using Portfolio.Errors.Registry;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 using Portfolio.Application.GitHub;
@@ -103,11 +104,36 @@ public sealed class GitHubActivityServiceTests
     }
 
     private static GitHubActivityService CreateService(IGitHubSource source, TimeProvider clock,
-        Action<GitHubOptions>? configure = null)
+        Action<GitHubOptions>? configure = null, RecordingReporter? reporter = null)
     {
         var options = new GitHubOptions { User = "diegoesp10" };
         configure?.Invoke(options);
-        return new GitHubActivityService(source, Options.Create(options), clock, NullLogger<GitHubActivityService>.Instance);
+        return new GitHubActivityService(source, Options.Create(options), clock, NullLogger<GitHubActivityService>.Instance, reporter ?? new RecordingReporter(), new TestCorrelation());
+    }
+
+    [Fact]
+    public async Task Records_dependency_failure_once_per_refresh_with_safe_context()
+    {
+        var source = new FakeGitHubSource { Fail = true };
+        var reporter = new RecordingReporter();
+        using var service = CreateService(source, new ManualClock(Now), reporter: reporter);
+        await service.GetAsync(CancellationToken.None);
+        await service.GetAsync(CancellationToken.None);
+        var entry = Assert.Single(reporter.Entries);
+        Assert.Equal("github.unavailable", entry.Code);
+        Assert.Equal("test-trace", entry.TraceId);
+        Assert.Equal(200, entry.Status); // The public API continues to serve its degraded contract.
+        Assert.DoesNotContain("403", entry.ExceptionType);
+    }
+
+    private sealed class RecordingReporter : IErrorReporter
+    {
+        public List<ErrorRecord> Entries { get; } = [];
+        public Task ReportAsync(ErrorRecord entry) { Entries.Add(entry); return Task.CompletedTask; }
+    }
+    private sealed class TestCorrelation : IErrorCorrelation
+    {
+        public string CurrentTraceId => "test-trace";
     }
 
     private sealed class ManualClock(DateTimeOffset now) : TimeProvider
