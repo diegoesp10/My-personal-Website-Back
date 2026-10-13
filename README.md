@@ -145,6 +145,10 @@ Al primer arranque se copia `seed.json` a `App_Data/portfolio.json`; las edicion
 - Con CI/CD activo ([docs/CI-CD.md](docs/CI-CD.md)), cada merge a `main` publica la imagen en GHCR y, tras tu aprobación en el entorno `production`, la despliega por SSH. Desde entonces, `Deploy-Server.ps1` queda para el contenido y las copias (`-ReplaceData`, `-Backup`, `-SetTunnelToken`): un despliegue completo con él sube imágenes construidas en tu PC y sustituiría las publicadas desde `main`.
 - Copia de seguridad: `.\scripts\Deploy-Server.ps1 -Backup` descarga el volumen del servidor (contenido, imágenes y visitas) a `App_Data/backups/servidor-<fecha>.tgz`. Hazla antes de cada `-ReplaceData`.
 
+## Rama main protegida
+
+`main` solo cambia mediante pull request desde `develop`. GitHub impide el push directo, forzar el historial y borrar la rama, y exige que pasen las comprobaciones («Backend checks») antes del merge. Publicar en producción pide dos confirmaciones: el merge de la PR y la aprobación del despliegue en el entorno `production`. En local, `.githooks/pre-push` pregunta antes de cada push y rechaza los push a `main`. Se activa una vez por clon con `git config core.hooksPath .githooks`. Desde una interfaz gráfica sin consola, el push se rechaza: hazlo desde la terminal.
+
 ## Estructura
 
 ```text
