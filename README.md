@@ -21,11 +21,15 @@ Portfolio.Tests          → Application (xUnit)
 | Método y ruta | Uso |
 | --- | --- |
 | `GET /api/portfolio` | Contenido público. Publica la revisión como `ETag` y responde `304` si no ha cambiado. |
-| `PUT /api/portfolio` | Guarda el contenido. Solo editor local (ver abajo); `409` si otra pestaña guardó antes. |
+| `PUT /api/portfolio` | Guarda el contenido. Solo editor local (ver abajo); `409` si otra pestaña guardó antes. Valida enlaces (solo http/https), correo, teléfono (para enlaces `tel:`), fechas de experiencia y límites de tamaño. |
 | `POST /api/uploads` | Sube PNG, JPEG o WebP de hasta 8 MB, validando la firma del archivo. Solo editor local. |
 | `GET /uploads/{nombre}` | Imágenes subidas, con caché inmutable (los nombres son aleatorios). |
 | `GET /api/github` | Repositorios públicos, lenguajes y commits recientes de GitHub. Caché de 30 min; si GitHub falla sirve el último resultado (`stale: true`) y espera antes de reintentar. Siempre `200`: `available: false` si no hay datos. |
 | `GET /sitemap.xml` | Sitemap con las páginas, proyectos y entradas del diario. |
+| `GET /api/seo/page?path=` | Metadatos de una ruta del frontal: título, descripción, dirección canónica, imagen para compartir y datos schema.org (`Person`, `WebSite`, página, migas de pan, proyecto o artículo). El frontal los aplica al navegar. Las rutas desconocidas y el editor salen como no indexables. |
+| `GET /api/seo/head?path=` | Los mismos metadatos como etiquetas HTML. Nginx los incluye (SSI) en el `<head>` de cada página, así que buscadores y vistas previas de enlaces los leen sin ejecutar JavaScript. Solo accesible desde Nginx. |
+| `POST /api/visits` | Registra una página vista (`{ path, referrer }`), enviada por el frontal con `sendBeacon`. Siempre `204`. Ver «Estadísticas de visitas». |
+| `GET /api/visitors` | Resumen público y anónimo: visitas, visitantes, personas ahora, últimos 30 días, ciudades con coordenadas redondeadas, países, páginas, sitios de origen y últimas visitas. |
 | `GET /api/editor` | Indica si el editor local está disponible. |
 | `GET /api/health` | Comprobación de salud para Docker. |
 | `GET /api/openapi/v1.json` | Descripción OpenAPI. Solo en Development. |
@@ -49,12 +53,40 @@ La API queda en <http://127.0.0.1:5080>. Para ver la web, arranca el frontal con
 | Clave (variable de entorno) | Por defecto | Uso |
 | --- | --- | --- |
 | `Portfolio:DataPath` (`Portfolio__DataPath`) | `App_Data/` | Carpeta del contenido y las imágenes. |
-| `Site:BaseUrl` | `https://diegoespinarodriguez.com` | Origen público para el sitemap. |
+| `Site:BaseUrl` | `https://diegoespinarodriguez.com` | Origen público para el sitemap, las direcciones canónicas y los datos schema.org. |
+| `Site:DefaultImage` | `/og-image.png` | Imagen para compartir (1200×630) cuando la página no tiene una propia; la sirve el frontal. |
 | `GitHub:User` | `diegoesp10` | Usuario cuya actividad pública se muestra. |
 | `GitHub:Enabled` | `true` | `false` desactiva las llamadas a GitHub (lo usan las pruebas). |
 | `GitHub:Token` (`GitHub__Token`) | vacío | Token opcional de solo lectura para ampliar el límite de GitHub. No hace falta con la caché. |
 | `RateLimiting:PermitLimit` / `Window` | `300` / `00:01:00` | Peticiones por IP y ventana. |
 | `ReverseProxy:Enabled` | `false` | Confía en `X-Forwarded-For/Proto` del proxy. Docker lo activa, porque la API solo es accesible a través de Nginx y de loopback. |
+| `ReverseProxy:ClientIpHeader` | `X-Forwarded-For` | Cabecera con la IP del visitante. Detrás de Cloudflare, `CF-Connecting-IP` (en Docker: `PORTFOLIO_CLIENT_IP_HEADER`). |
+| `Visitors:Enabled` | `true` | Activa las estadísticas de visitas. |
+| `Visitors:UseProxyLocation` | `false` | Usa las cabeceras de ubicación de Cloudflare (`CF-IPCountry`, `cf-ipcity`, `cf-iplatitude`, `cf-iplongitude`). Solo si todo el tráfico pasa por Cloudflare (en Docker: `PORTFOLIO_PROXY_LOCATION=true`). |
+| `Visitors:GeoDatabasePath` | `geo/dbip-city-lite.mmdb` en la carpeta de datos | Base MMDB local para ubicar direcciones sin enviarlas a nadie. Opcional. |
+
+## SEO
+
+Cada página llega al navegador con su propio título, descripción, dirección canónica, imagen para compartir y datos estructurados, generados por `SeoService` a partir del contenido:
+
+- La portada es una `ProfilePage` de la persona (`Person`), con su nombre completo, el nombre corto («Diego Espina»), el puesto, la ubicación, los perfiles de GitHub y LinkedIn (`sameAs`) y las tecnologías de las competencias (`knowsAbout`).
+- Los proyectos son `CreativeWork` y las entradas del diario, `BlogPosting` con su fecha; todas las páginas interiores llevan migas de pan.
+- Las descripciones salen del texto de cada página, sin marcas de énfasis y recortadas a 160 caracteres.
+- La imagen es la del proyecto si tiene una subida; si no, la imagen general del frontal.
+- Las rutas que no existen y el editor llevan `noindex` y no tienen dirección canónica.
+
+Las secciones fijas del frontal están en `SeoService` y deben coincidir con su router, igual que las de `SitemapService`.
+
+## Estadísticas de visitas
+
+La página `/visitas` del frontal muestra un globo con las ciudades desde las que se visita la web. El diseño cumple el RGPD sin necesidad de banner de cookies:
+
+- **No se guarda ninguna dirección IP.** La IP solo se usa al recibir la visita para obtener la ciudad aproximada. Se guardan recuentos por día, por ciudad (coordenadas redondeadas a un decimal, unos 10 km), por página y por sitio de origen (solo el dominio), y las últimas visitas sin identificador. Todo va en `visitors.json`, en la carpeta de datos.
+- **Visitantes únicos sin cookies.** Se usa un HMAC de IP y navegador cuya clave es aleatoria, cambia cada día y solo vive en memoria: un visitante cuenta una vez al día y no se puede seguir entre días ni recuperar su IP. «Ahora mismo» son los visitantes de los últimos 5 minutos.
+- **Opt-out y filtrado.** Se respetan `DNT: 1` y `Sec-GPC: 1`. Se descartan bots y navegadores automatizados, el editor y las rutas que no son páginas públicas.
+- **Ubicación sin terceros.** Detrás de Cloudflare se usan sus cabeceras de ubicación: activa «Add visitor location headers» en *Rules › Transform Rules › Managed Transforms*. En cualquier otro alojamiento se puede usar la base gratuita DB-IP City Lite (CC BY 4.0) con `scripts/Update-GeoDatabase.ps1`, que la descarga en `App_Data/geo`; `Start-Docker.ps1` la copia al volumen. Sin ninguna de las dos, las visitas se cuentan sin ubicación.
+
+Las cifras se acumulan en memoria y se guardan cada 30 segundos y al parar el servidor. Esta versión está pensada para una sola instancia, como el resto de la persistencia en archivos.
 
 ## Docker
 
@@ -87,8 +119,8 @@ dotnet build DiegoPortfolio.slnx
 node scripts/test-api.mjs
 ```
 
-- `Portfolio.Tests`: validación del contenido (incluido `seed.json`), concurrencia por revisión, firmas de imagen, sitemap y servicio de GitHub (caché, modo degradado, espera entre reintentos, agregación de lenguajes).
-- `scripts/test-api.mjs`: arranca la API compilada en el puerto 5082 con datos aislados en `.test-data/` y comprueba ETag/304, sitemap, cabeceras, validaciones, protección del editor, conflictos, imágenes, persistencia tras reinicio y modo Production.
+- `Portfolio.Tests`: validación del contenido (incluido `seed.json`), concurrencia por revisión, firmas de imagen, sitemap, metadatos SEO y servicio de GitHub (caché, modo degradado, espera entre reintentos, agregación de lenguajes).
+- `scripts/test-api.mjs`: arranca la API compilada en el puerto 5082 con datos aislados en `.test-data/` y comprueba ETag/304, sitemap, cabeceras, validaciones, protección del editor, conflictos, imágenes, metadatos SEO (fragmento HTML escapado y JSON), visitas anónimas (ubicación por cabeceras, Do Not Track, bots, que la IP no llegue al disco), persistencia tras reinicio y modo Production.
 
 ## Datos y copias
 
@@ -96,13 +128,32 @@ Al primer arranque se copia `seed.json` a `App_Data/portfolio.json`; las edicion
 
 ## Publicación
 
-El dominio previsto es **diegoespinarodriguez.com**, con DNS en Cloudflare. Esta API necesita un host con .NET 10 o contenedores (por ejemplo, Azure App Service / Container Apps o un VPS con Docker detrás de Cloudflare Tunnel). Antes de publicar: definir `Site:BaseUrl`, mantener `ASPNETCORE_ENVIRONMENT=Production`, persistir `/app/data` y, si el tráfico llega a través de Cloudflare, propagar la IP real del cliente al límite de peticiones.
+**diegoespinarodriguez.com** se sirve desde una máquina virtual Ubuntu con Docker (Azure, tamaño B2ats_v2) detrás de **Cloudflare Tunnel**. El servidor no tiene ningún puerto abierto salvo SSH: las visitas solo llegan por el túnel, que conecta hacia fuera con Cloudflare. Por eso la API confía en `CF-Connecting-IP` y en las cabeceras de ubicación de Cloudflare. La dirección del servidor no figura en los repositorios: se usa el alias SSH `diego-portfolio` de `~/.ssh/config`.
+
+```powershell
+.\scripts\Deploy-Server.ps1                  # construye las dos imágenes en local, las sube y reinicia la web
+.\scripts\Deploy-Server.ps1 -SkipBuild       # sube las imágenes ya construidas
+.\scripts\Deploy-Server.ps1 -ReplaceData     # sustituye el contenido del servidor por App_Data (copia el anterior a backups/)
+.\scripts\Deploy-Server.ps1 -SetTunnelToken  # pide el token del túnel, lo guarda en el servidor y arranca el túnel
+.\scripts\Deploy-Server.ps1 -Backup          # descarga una copia de los datos del servidor
+```
+
+- `deploy/compose.yaml` define el despliegue del servidor: `api`, `web` (publicada solo en el loopback del servidor) y `tunnel` (`cloudflared`, activo cuando `~/portfolio/.env` contiene el token). `deploy/install.sh` se ejecuta allí: carga las imágenes, importa `App_Data` si el volumen no tiene contenido y arranca el compose.
+- El primer despliegue importa `portfolio.json` y `uploads`; los siguientes conservan el contenido del servidor. Las estadísticas de visitas solo existen en el servidor y nunca se sustituyen.
+- En Cloudflare, los nombres de host públicos del túnel (`diegoespinarodriguez.com` y `www`) apuntan a `http://web:8080`. Para que el mapa de visitas tenga ubicación, activa «Add visitor location headers» en *Rules › Transform Rules › Managed Transforms*. No crees registros DNS con la IP del servidor.
+- Para revisar la web publicada sin pasar por Cloudflare: `ssh -L 8080:127.0.0.1:8080 diego-portfolio` y abre <http://127.0.0.1:8080>. Registros: `ssh diego-portfolio "cd portfolio; docker compose logs --tail 100"`.
+- Con CI/CD activo ([docs/CI-CD.md](docs/CI-CD.md)), cada merge a `main` publica la imagen en GHCR y, tras tu aprobación en el entorno `production`, la despliega por SSH. Desde entonces, `Deploy-Server.ps1` queda para el contenido y las copias (`-ReplaceData`, `-Backup`, `-SetTunnelToken`): un despliegue completo con él sube imágenes construidas en tu PC y sustituiría las publicadas desde `main`.
+- Copia de seguridad: `.\scripts\Deploy-Server.ps1 -Backup` descarga el volumen del servidor (contenido, imágenes y visitas) a `App_Data/backups/servidor-<fecha>.tgz`. Hazla antes de cada `-ReplaceData`.
+
+## Rama main protegida
+
+`main` solo cambia mediante pull request desde `develop`. GitHub impide el push directo, forzar el historial y borrar la rama, y exige que pasen las comprobaciones («Backend checks») antes del merge. Publicar en producción pide dos confirmaciones: el merge de la PR y la aprobación del despliegue en el entorno `production`. En local, `.githooks/pre-push` pregunta antes de cada push y rechaza los push a `main`. Se activa una vez por clon con `git config core.hooksPath .githooks`. Desde una interfaz gráfica sin consola, el push se rechaza: hazlo desde la terminal.
 
 ## Estructura
 
 ```text
 ├── Portfolio.Api/              Controladores por funcionalidad, middleware y composición
-├── Portfolio.Application/      Servicios, validación y contratos (Portfolios, Images, GitHub, Sitemaps)
+├── Portfolio.Application/      Servicios, validación y contratos (Portfolios, Images, GitHub, Sitemaps, Seo, Visitors)
 ├── Portfolio.Domain/           Modelos: perfil, proyectos, experiencia, formación, diario, GitHub
 ├── Portfolio.Infrastructure/   Repositorios JSON e imágenes, cliente HTTP de GitHub
 ├── Portfolio.Tests/            Pruebas xUnit
@@ -111,3 +162,13 @@ El dominio previsto es **diegoespinarodriguez.com**, con DNS en Cloudflare. Esta
 ├── Dockerfile · compose.yaml   Imagen y contenedor de la API
 └── Start-Api.ps1 · Start-Docker.ps1
 ```
+
+## Contenido del perfil y proyectos
+
+`profile.hasDrivingLicense` y `profile.hasOwnVehicle` son booleanos opcionales al importar contenido antiguo (por defecto `false`). Se editan desde Perfil y se muestran en Sobre mí, el CV y su versión imprimible cuando están activados. `project.experienceId` vincula el trabajo a una etapa profesional; vacío indica un proyecto personal.
+
+El contenido incluye Azure y pipelines de CI/CD, uso diario de Claude y Codex y aprendizaje con LLMs locales. La ficha `peluqueria-lucia` describe la web pública, gestión y agenda del salón como proyecto en desarrollo; su composición decorativa utiliza `art: "salon"`. Los textos y competencias se gestionan desde el editor, no están incrustados en las páginas.
+
+## CI/CD por SSH
+
+El workflow `.github/workflows/ci-cd.yml` comprueba las PR y publica una imagen al actualizar `main`. El despliegue a la VM espera aprobación en el entorno `production`, usa secretos de GitHub y conserva los datos. Configuración, credenciales y activación en [docs/CI-CD.md](docs/CI-CD.md).

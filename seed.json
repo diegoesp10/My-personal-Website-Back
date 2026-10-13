@@ -2,20 +2,79 @@
   "revision": "initial",
   "profile": {
     "name": "Diego Espina Rodríguez",
-    "role": "Backend Developer · .NET / C#",
+    "role": "Backend Developer · .NET / Azure",
     "headline": "Backends .NET que aguantan *la carga real.*",
-    "intro": "Desarrollador backend con más de 3 años construyendo APIs REST, integraciones entre sistemas y lógica de negocio crítica sobre .NET y SQL Server. Me especializo en la parte difícil: datos a escala de millones de registros, procesos asíncronos que mantienen la consistencia y rendimiento medido.",
-    "bio": "Diseño APIs desde cero aislando la capa de acceso a datos y he llevado consultas y endpoints de decenas de segundos a respuestas por debajo del segundo. Trabajo con tests automatizados, colas de mensajes y ciclo completo en Azure y Azure DevOps: del diseño al despliegue y el soporte en producción.\n\nMe gusta entender el sistema entero, también lo que ve quien lo usa. Por eso completo el backend con React y TypeScript cuando el proyecto lo necesita, y mantengo sitios WordPress en producción.",
+    "intro": "Desarrollador backend especializado en .NET, SQL Server y el ecosistema Azure. Diseño APIs, integraciones y lógica de negocio crítica, con procesos asíncronos, rendimiento medido y despliegues automatizados desde los repositorios.",
+    "bio": "Diseño APIs desde cero aislando la capa de acceso a datos y he llevado consultas y endpoints de decenas de segundos a respuestas por debajo del segundo. Trabajo con tests automatizados, colas de mensajes y lógica de negocio que mantiene la consistencia incluso ante fallos.\n\nMe muevo en el ecosistema de Microsoft Azure y Azure DevOps: preparo pipelines de CI/CD conectados a los repositorios para automatizar pruebas, compilación y despliegues. Trabajo con la nube y el almacenamiento de Azure, incluido Azure Blob Storage, y sigo incorporando estos flujos a mis proyectos.\n\nUso Claude, de Anthropic, y Codex, de OpenAI, a diario como parte de mi trabajo de desarrollo. Mantengo un aprendizaje continuo de sus modelos y herramientas, pruebo sus mejoras y reviso cómo aplicarlas al código. También instalo y ejecuto modelos de IA y LLMs en mis propias máquinas para aprender a gestionar los datos, la configuración y la inferencia en local.\n\nMe gusta entender el sistema entero, también lo que ve quien lo usa. Por eso completo el backend con React y TypeScript cuando el proyecto lo necesita, y mantengo sitios WordPress en producción con PHP.",
     "personal": "Futbolista federado en competición y gimnasio a diario. La constancia, la disciplina y el trabajo en equipo que me exige el campo son los mismos que aplico al código.",
     "location": "Oviedo, Asturias",
-    "availability": "Abierto a nuevas oportunidades · remoto, híbrido o presencial",
+    "availability": "Remoto, híbrido o presencial",
     "languages": "Español nativo · Inglés profesional",
     "email": "diegoespinarodriguez@gmail.com",
+    "phone": "+34 691 649 298",
     "github": "https://github.com/diegoesp10",
     "linkedin": "https://www.linkedin.com/in/diego-espina-rodr%C3%ADguez-747364243/",
-    "portrait": ""
+    "portrait": "",
+    "hasDrivingLicense": true,
+    "hasOwnVehicle": true
   },
   "projects": [
+    {
+      "id": "erp-solmicro-expertis",
+      "title": "ERP Solmicro Expertis",
+      "category": "ERP",
+      "description": "Implantación, mantenimiento y mejora diaria del ERP Expertis (hoy Solmicro) en clientes, con trato directo con el cliente y con el fabricante.",
+      "details": "No es un producto mío, pero es una de las piezas en las que más impacto he tenido. Durante mi etapa en Adico trabajé a diario sobre el ERP Expertis, hoy Solmicro: implantación en clientes, conservación de instalaciones en producción y mejora continua.\n\nDesarrollaba a medida sobre el ERP para empresas con bases de datos de millones de registros: motores de cálculo y reglas de negocio de facturación, inventario y flujos administrativos, optimización de consultas y procedimientos T-SQL e integraciones con sistemas externos.\n\nEl trabajo era de ida y vuelta: contacto directo con el cliente para entender cada necesidad y validar lo implantado, y con el fabricante del ERP para resolver incidencias y encajar los desarrollos en el producto.",
+      "year": "2023 – 2025",
+      "status": "Implantado en clientes",
+      "url": "",
+      "image": "",
+      "tags": [
+        "Solmicro Expertis",
+        "C#",
+        "VB.NET",
+        "SQL Server",
+        "T-SQL",
+        "Crystal Reports"
+      ],
+      "art": "erp",
+      "featured": true,
+      "highlights": [
+        "Implantación del ERP en clientes y puesta en producción",
+        "Conservación y mejora diaria de instalaciones con millones de registros",
+        "Desarrollos a medida en C#, VB.NET y T-SQL sobre el ERP",
+        "Consultas e informes de decenas de segundos a menos de un segundo",
+        "Interlocución directa con el cliente y con el fabricante del ERP"
+      ],
+      "links": [],
+      "experienceId": "adico"
+    },
+    {
+      "id": "catalogos-xml",
+      "title": "Generación asíncrona de catálogos XML",
+      "category": "Backend .NET",
+      "description": "Proceso asíncrono que lee los procesos pendientes y genera los XML de los catálogos de producto de un cliente industrial internacional.",
+      "details": "Durante mi etapa en Wembley Studios diseñé e implementé un proceso asíncrono que lee los procesos pendientes y genera a partir de ellos los ficheros XML de los catálogos de producto de un cliente industrial internacional.\n\nAl ejecutarse en segundo plano, la generación de los catálogos no bloquea la aplicación mientras se procesa.\n\nEl proyecto pertenece al cliente y a la empresa, así que aquí describo mi parte a alto nivel. Puedo dar más detalle en una conversación.",
+      "year": "2025 – 2026",
+      "status": "Proyecto de cliente",
+      "url": "",
+      "image": "",
+      "tags": [
+        "C#",
+        ".NET 8",
+        "Procesos asíncronos",
+        "XML"
+      ],
+      "art": "xml",
+      "featured": true,
+      "highlights": [
+        "Diseño e implementación del proceso",
+        "Ejecución asíncrona, en segundo plano",
+        "Generación de los XML de catálogo a partir de los procesos pendientes"
+      ],
+      "links": [],
+      "experienceId": "wembley-studios"
+    },
     {
       "id": "murmur",
       "title": "Murmur · Transcriptor de reuniones",
@@ -26,7 +85,16 @@
       "status": "Código abierto",
       "url": "",
       "image": "",
-      "tags": [".NET 10", "ASP.NET Core", "SQL Server", "Whisper", "Ollama", "React", "TypeScript", "Docker"],
+      "tags": [
+        ".NET 10",
+        "ASP.NET Core",
+        "SQL Server",
+        "Whisper",
+        "Ollama",
+        "React",
+        "TypeScript",
+        "Docker"
+      ],
       "art": "wave",
       "featured": true,
       "highlights": [
@@ -37,9 +105,47 @@
         "Modelos en local: sin claves de OpenAI ni consumo de APIs de pago"
       ],
       "links": [
-        { "label": "Repositorio backend", "url": "https://github.com/diegoesp10/Transcriptor-Back" },
-        { "label": "Repositorio frontend", "url": "https://github.com/diegoesp10/Transcriptor-Front" }
+        {
+          "label": "Repositorio backend",
+          "url": "https://github.com/diegoesp10/Transcriptor-Back"
+        },
+        {
+          "label": "Repositorio frontend",
+          "url": "https://github.com/diegoesp10/Transcriptor-Front"
+        }
       ]
+    },
+    {
+      "id": "peluqueria-lucia",
+      "title": "Peluquería Lucía Espina",
+      "category": "Full stack",
+      "description": "Web pública y gestión interna de una peluquería: agenda propia, clientes, cobros y catálogo, con ASP.NET Core 10 y SQL Server.",
+      "details": "Proyecto en desarrollo para la Peluquería Ecológica Lucía Espina. Una misma aplicación reúne la web pública del salón y una administración privada para gestionar el trabajo diario.\n\nEl panel permite consultar clientes y su historial, registrar visitas y servicios, gestionar cobros en efectivo, tarjeta o mixtos, imprimir tickets y exportar el periodo seleccionado a Excel. Los cambios de precio en el catálogo conservan los importes de las visitas anteriores.\n\nLa agenda propia ofrece disponibilidad y permite solicitar citas, preparar propuestas y confirmarlas mediante enlaces privados con caducidad. Incorpora una cola de comunicaciones por correo y preparación de mensajes de WhatsApp para su envío manual; la aceptación del cliente es un paso independiente. La configuración de SMTP está pendiente antes de activar los envíos.\n\nLa administración exige contraseña y Microsoft Authenticator, con códigos de recuperación, sesiones revocables y protección CSRF. Las reseñas se verifican mediante tickets y se moderan desde el panel.\n\nArquitectura por capas: Domain, Application, Infrastructure y Web. ASP.NET Core MVC con vistas Razor, Entity Framework Core y SQL Server; bibliotecas independientes para correo y WhatsApp. Program.cs se limita al arranque y la composición de dependencias se organiza en Startup.cs y configuración por funcionalidades.",
+      "year": "2026",
+      "status": "En desarrollo",
+      "url": "",
+      "image": "",
+      "tags": [
+        ".NET 10",
+        "ASP.NET Core MVC",
+        "SQL Server",
+        "Entity Framework Core",
+        "Razor",
+        "MFA",
+        "ClosedXML"
+      ],
+      "art": "salon",
+      "featured": false,
+      "highlights": [
+        "Gestión de clientes, visitas e historial de servicios",
+        "Cobros en efectivo, tarjeta o mixtos, tickets y exportación a Excel",
+        "Agenda propia con disponibilidad y aceptación de citas mediante enlaces privados",
+        "Administración con MFA y sesiones revocables",
+        "Catálogo compartido entre web pública y panel; conservación de precios históricos",
+        "Arquitectura por capas y bibliotecas de comunicaciones independientes"
+      ],
+      "links": [],
+      "experienceId": ""
     },
     {
       "id": "bills-engine",
@@ -51,9 +157,14 @@
       "status": "Código abierto",
       "url": "",
       "image": "",
-      "tags": [".NET 10", "C#", "Diseño de dominio", "xUnit"],
+      "tags": [
+        ".NET 10",
+        "C#",
+        "Diseño de dominio",
+        "xUnit"
+      ],
       "art": "ledger",
-      "featured": true,
+      "featured": false,
       "highlights": [
         "Value objects para importes y monedas",
         "Reparto exacto de importes sin perder unidades mínimas",
@@ -61,7 +172,10 @@
         "Tests unitarios en xUnit sobre el dominio"
       ],
       "links": [
-        { "label": "Repositorio", "url": "https://github.com/diegoesp10/Bills-Engine" }
+        {
+          "label": "Repositorio",
+          "url": "https://github.com/diegoesp10/Bills-Engine"
+        }
       ]
     },
     {
@@ -74,9 +188,16 @@
       "status": "En evolución",
       "url": "",
       "image": "",
-      "tags": [".NET 10", "ASP.NET Core", "React", "TypeScript", "Docker", "Nginx"],
+      "tags": [
+        ".NET 10",
+        "ASP.NET Core",
+        "React",
+        "TypeScript",
+        "Docker",
+        "Nginx"
+      ],
       "art": "orange",
-      "featured": true,
+      "featured": false,
       "highlights": [
         "Arquitectura por capas con contratos explícitos",
         "Integración con la API de GitHub con caché y modo degradado",
@@ -85,8 +206,14 @@
         "Editor local con control de concurrencia"
       ],
       "links": [
-        { "label": "Repositorio frontend", "url": "https://github.com/diegoesp10/My-Personal-WebSite" },
-        { "label": "Repositorio backend", "url": "https://github.com/diegoesp10/My-personal-Website-Back" }
+        {
+          "label": "Repositorio frontend",
+          "url": "https://github.com/diegoesp10/My-Personal-WebSite"
+        },
+        {
+          "label": "Repositorio backend",
+          "url": "https://github.com/diegoesp10/My-personal-Website-Back"
+        }
       ]
     },
     {
@@ -99,7 +226,12 @@
       "status": "En producción",
       "url": "https://www.mijaresabogados.es",
       "image": "",
-      "tags": ["WordPress", "PHP", "CSS", "Mantenimiento web"],
+      "tags": [
+        "WordPress",
+        "PHP",
+        "CSS",
+        "Mantenimiento web"
+      ],
       "art": "ink",
       "featured": true,
       "highlights": [
@@ -120,7 +252,15 @@
       "status": "En desarrollo · código privado",
       "url": "",
       "image": "",
-      "tags": [".NET", "ASP.NET Core", "SQL Server", "Azure Blob Storage", "Ollama", "MFA", "React"],
+      "tags": [
+        ".NET",
+        "ASP.NET Core",
+        "SQL Server",
+        "Azure Blob Storage",
+        "Ollama",
+        "MFA",
+        "React"
+      ],
       "art": "grid",
       "featured": false,
       "highlights": [
@@ -143,6 +283,7 @@
       "location": "100 % remoto",
       "summary": "Backend en C# y .NET 8 sobre dominios de negocio con reglas densas, del diseño al soporte en producción.",
       "highlights": [
+        "Proceso asíncrono de generación de catálogos de producto en XML para un cliente industrial internacional.",
         "Diseño e implementación desde cero de más de 25 endpoints REST con validaciones encadenadas, máquinas de estado y casos límite resueltos sin romper contratos ya en producción.",
         "Rediseño de la capa de acceso a datos, aislándola del resto de la aplicación: consultas asíncronas, proyecciones a DTO, paginación y eliminación de N+1. Endpoints de más de 30 segundos pasaron a responder en menos de 1 segundo.",
         "Integraciones con sistemas y APIs de terceros mediante colas de mensajes, reintentos e idempotencia, para que los procesos fueran repetibles y consistentes ante fallos, timeouts o respuestas parciales.",
@@ -150,7 +291,19 @@
         "Ciclo completo en Azure y Azure DevOps: pipelines de CI/CD, despliegues a QA y producción y diagnóstico de incidencias en producción.",
         "Proyecto interno de I+D: agente basado en IA para automatizar consultas y tareas recurrentes sobre Azure DevOps."
       ],
-      "stack": ["C#", ".NET 8", "ASP.NET Core", "Entity Framework Core", "LINQ", "SQL Server", "Colas de mensajes", "xUnit", "Azure", "Azure DevOps", "CI/CD"]
+      "stack": [
+        "C#",
+        ".NET 8",
+        "ASP.NET Core",
+        "Entity Framework Core",
+        "LINQ",
+        "SQL Server",
+        "Colas de mensajes",
+        "xUnit",
+        "Azure",
+        "Azure DevOps",
+        "CI/CD"
+      ]
     },
     {
       "id": "adico",
@@ -162,6 +315,7 @@
       "location": "Oviedo · presencial",
       "summary": "Desarrollo a medida sobre el ERP Solmicro Expertis para clientes con bases de datos de millones de registros.",
       "highlights": [
+        "Implantación del ERP en clientes, conservación y mejora diaria, con contacto directo con el cliente y con el fabricante.",
         "Motores de cálculo y reglas de negocio para facturación, inventario y flujos administrativos en producción.",
         "Optimización de consultas y procedimientos T-SQL: revisión de planes de ejecución, ajuste de índices y reescritura de consultas, reduciendo procesos e informes de decenas de segundos a menos de un segundo.",
         "Integración y sincronización entre el ERP y sistemas externos, garantizando la consistencia de los datos cuando alguna de las partes fallaba.",
@@ -169,7 +323,16 @@
         "Análisis funcional y trato directo con el cliente: requisitos, validación de lo implantado y resolución de incidencias críticas.",
         "Explotación de datos e informes con Crystal Reports para el análisis operativo."
       ],
-      "stack": ["C#", ".NET", "VB.NET", "SQL Server", "T-SQL", "MySQL", "Solmicro Expertis", "Crystal Reports"]
+      "stack": [
+        "C#",
+        ".NET",
+        "VB.NET",
+        "SQL Server",
+        "T-SQL",
+        "MySQL",
+        "Solmicro Expertis",
+        "Crystal Reports"
+      ]
     }
   ],
   "education": [
@@ -183,12 +346,95 @@
     }
   ],
   "skills": [
-    { "id": "lenguajes", "title": "Lenguajes y frameworks", "description": "El ecosistema en el que trabajo cada día.", "tags": ["C#", ".NET 8 / 10", "ASP.NET Core", "Web API", "Entity Framework Core", "LINQ"] },
-    { "id": "datos", "title": "Datos y rendimiento", "description": "Consultas que responden en menos de un segundo sobre millones de registros.", "tags": ["SQL Server", "T-SQL", "Procedimientos almacenados", "Índices y planes de ejecución", "MySQL / MariaDB"] },
-    { "id": "arquitectura", "title": "Arquitectura backend", "description": "APIs con contratos estables y procesos que no pierden datos cuando algo falla.", "tags": ["APIs REST", "Arquitectura por capas", "SOLID", "Procesos asíncronos", "Colas de mensajes", "Idempotencia"] },
-    { "id": "calidad", "title": "Calidad y pruebas", "description": "Tests en el pipeline para que cada entrega no rompa la anterior.", "tags": ["xUnit", "Tests de integración", "Diagnóstico en producción"] },
-    { "id": "cloud", "title": "Cloud y DevOps", "description": "Del commit a producción, y el soporte que viene después.", "tags": ["Azure", "Azure DevOps", "CI/CD", "Docker", "IIS", "Windows / Linux Server"] },
-    { "id": "integraciones", "title": "Integraciones y web", "description": "Conectar sistemas y completar el producto por delante cuando hace falta.", "tags": ["APIs de terceros", "Meta / WhatsApp Business API", "React", "TypeScript", "WordPress", "PHP"] }
+    {
+      "id": "lenguajes",
+      "title": "Lenguajes y frameworks",
+      "description": "El ecosistema en el que trabajo cada día.",
+      "tags": [
+        "C#",
+        ".NET 8 / 10",
+        "ASP.NET Core",
+        "Web API",
+        "Entity Framework Core",
+        "LINQ"
+      ]
+    },
+    {
+      "id": "datos",
+      "title": "Datos y rendimiento",
+      "description": "Consultas que responden en menos de un segundo sobre millones de registros.",
+      "tags": [
+        "SQL Server",
+        "T-SQL",
+        "Procedimientos almacenados",
+        "Índices y planes de ejecución",
+        "MySQL / MariaDB"
+      ]
+    },
+    {
+      "id": "arquitectura",
+      "title": "Arquitectura backend",
+      "description": "APIs con contratos estables y procesos que no pierden datos cuando algo falla.",
+      "tags": [
+        "APIs REST",
+        "Arquitectura por capas",
+        "SOLID",
+        "Procesos asíncronos",
+        "Colas de mensajes",
+        "Idempotencia"
+      ]
+    },
+    {
+      "id": "calidad",
+      "title": "Calidad y pruebas",
+      "description": "Tests en el pipeline para que cada entrega no rompa la anterior.",
+      "tags": [
+        "xUnit",
+        "Tests de integración",
+        "Diagnóstico en producción"
+      ]
+    },
+    {
+      "id": "cloud",
+      "title": "Azure y despliegues automáticos",
+      "description": "Pipelines de Azure DevOps conectados a los repositorios para automatizar pruebas, compilación y despliegue. Trabajo con la nube de Azure y su almacenamiento, y aplico estos flujos a mis proyectos.",
+      "tags": [
+        "Azure",
+        "Azure DevOps",
+        "Azure Pipelines",
+        "CI/CD",
+        "Azure Blob Storage",
+        "Docker",
+        "IIS",
+        "Windows / Linux Server"
+      ]
+    },
+    {
+      "id": "ia-aplicada",
+      "title": "IA aplicada y aprendizaje continuo",
+      "description": "Claude y Codex a diario: pruebo las mejoras de Anthropic y OpenAI y las incorporo a mi trabajo. Instalo LLMs en mis máquinas para aprender a gestionar datos y ejecutar modelos en local.",
+      "tags": [
+        "Claude · Anthropic",
+        "Codex · OpenAI",
+        "LLMs locales",
+        "Ollama",
+        "Inferencia local",
+        "Gestión de datos"
+      ]
+    },
+    {
+      "id": "integraciones",
+      "title": "Integraciones y web",
+      "description": "Conectar sistemas y completar el producto por delante cuando hace falta.",
+      "tags": [
+        "APIs de terceros",
+        "Meta / WhatsApp Business API",
+        "React",
+        "TypeScript",
+        "WordPress",
+        "PHP"
+      ]
+    }
   ],
   "entries": [
     {
@@ -206,10 +452,5 @@
       "text": "Juego al fútbol federado en competición y entreno a diario en el gimnasio. Fuera de la pantalla también hay método.\n\nDel campo me llevo la constancia de repetir bien lo básico, la disciplina de prepararse antes de que haga falta y la idea de que el equipo importa más que la jugada individual. En el código se traduce en tests antes de desplegar, en medir antes de optimizar y en dejar el trabajo fácil de entender para quien venga después."
     }
   ],
-  "metrics": [
-    { "id": "anios", "value": "+3 años", "label": "desarrollando backend .NET en producción" },
-    { "id": "endpoints", "value": "25+", "label": "endpoints REST diseñados desde cero" },
-    { "id": "rendimiento", "value": "30 s → <1 s", "label": "respuesta tras rediseñar el acceso a datos" },
-    { "id": "registros", "value": "Millones", "label": "de registros en bases SQL Server optimizadas" }
-  ]
+  "metrics": []
 }

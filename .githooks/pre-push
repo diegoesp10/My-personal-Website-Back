@@ -1,0 +1,36 @@
+#!/bin/sh
+# Asks for confirmation before every push and refuses direct pushes to main, which GitHub only changes through a
+# pull request (merge, then approval of the deployment). Enabled once per clone with:
+#   git config core.hooksPath .githooks
+# It is a reminder: the ruleset on GitHub is what actually protects main.
+# Plain ASCII messages, so they read the same in any Windows console code page.
+zero=0000000000000000000000000000000000000000
+summary=""
+while read -r local_ref local_sha remote_ref remote_sha; do
+  branch=${remote_ref#refs/heads/}
+  if [ "$branch" = main ]; then
+    echo "main no admite push directo: sube los cambios a develop y abre una pull request." >&2
+    exit 1
+  fi
+  if [ "$local_sha" = "$zero" ]; then
+    summary="$summary\n  - borrar la rama $branch"
+  elif [ "$remote_sha" = "$zero" ]; then
+    summary="$summary\n  - $branch (rama nueva): $(git rev-list --count "$local_sha" --not --remotes) commits"
+  else
+    summary="$summary\n  - $branch: $(git rev-list --count "$remote_sha..$local_sha") commits"
+  fi
+done
+[ -z "$summary" ] && exit 0
+
+# The ref list arrives on stdin, so the answer is read from the terminal.
+if ! (exec 3</dev/tty) 2>/dev/null; then
+  echo "No hay terminal para confirmar el push: hazlo desde una consola." >&2
+  exit 1
+fi
+exec 3</dev/tty
+printf "Vas a subir a %s:%b\nConfirmas el push? (s/N) " "$1" "$summary" >/dev/tty
+read -r answer <&3
+case "$answer" in
+  s|S|si|Si|SI) exit 0 ;;
+  *) echo "Push cancelado." >&2; exit 1 ;;
+esac

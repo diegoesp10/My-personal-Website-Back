@@ -12,6 +12,12 @@ public sealed class ReverseProxyOptions
     /// through that proxy (the Docker setup publishes it on loopback and to the Nginx container).
     /// </summary>
     public bool Enabled { get; set; }
+
+    /// <summary>
+    /// Header with the client address. Behind Cloudflare use CF-Connecting-IP, so the rate limit and the visit
+    /// statistics see the visitor and not the Cloudflare edge.
+    /// </summary>
+    public string ClientIpHeader { get; set; } = ForwardedHeadersDefaults.XForwardedForHeaderName;
 }
 
 public static class ReverseProxyExtensions
@@ -19,9 +25,10 @@ public static class ReverseProxyExtensions
     public static IServiceCollection AddReverseProxySupport(this IServiceCollection services, IConfiguration configuration)
     {
         services.AddOptions<ReverseProxyOptions>().Bind(configuration.GetSection(ReverseProxyOptions.SectionName));
-        services.Configure<ForwardedHeadersOptions>(options =>
+        services.AddOptions<ForwardedHeadersOptions>().Configure<IOptions<ReverseProxyOptions>>((options, proxy) =>
         {
             options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+            options.ForwardedForHeaderName = proxy.Value.ClientIpHeader;
             options.ForwardLimit = 1;
             // The proxy address changes with every container; the API is not published outside the proxy.
             options.KnownIPNetworks.Clear();

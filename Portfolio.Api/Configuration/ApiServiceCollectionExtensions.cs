@@ -21,6 +21,8 @@ public static class ApiServiceCollectionExtensions
             .Bind(configuration.GetSection(SiteOptions.SectionName))
             .Validate(options => Uri.TryCreate(options.BaseUrl, UriKind.Absolute, out var uri) && uri.Scheme is "http" or "https",
                 "Site:BaseUrl debe ser una dirección absoluta.")
+            .Validate(options => options.DefaultImage.StartsWith('/') && !options.DefaultImage.StartsWith("//"),
+                "Site:DefaultImage debe ser una ruta relativa a la web, como /og-image.png.")
             .ValidateOnStart();
         services.AddApiRateLimiting(configuration);
         services.AddReverseProxySupport(configuration);

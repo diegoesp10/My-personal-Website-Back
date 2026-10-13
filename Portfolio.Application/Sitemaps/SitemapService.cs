@@ -7,7 +7,7 @@ public sealed class SitemapService(IPortfolioRepository repository) : ISitemapSe
 {
     // Public routes of the React frontend. Keep in sync with the router in the frontend repository.
     private static readonly string[] Pages =
-        ["/", "/proyectos", "/experiencia", "/github", "/sobre-mi", "/diario", "/contacto"];
+        ["/", "/proyectos", "/experiencia", "/github", "/visitas", "/sobre-mi", "/diario", "/contacto"];
 
     public async Task<IReadOnlyList<SitemapEntry>> GetEntriesAsync(CancellationToken cancellationToken)
     {

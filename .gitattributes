@@ -1,0 +1,6 @@
+
+# GitHub deployment scripts are executed by Bash on Linux.
+.github/**/*.sh text eol=lf
+.github/**/*.yml text eol=lf
+.github/**/*.mjs text eol=lf
+.githooks/* text eol=lf

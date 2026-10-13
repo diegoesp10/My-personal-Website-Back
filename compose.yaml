@@ -14,6 +14,10 @@ services:
       ASPNETCORE_HTTP_PORTS: "8080"
       Portfolio__DataPath: /app/data
       ReverseProxy__Enabled: "true"
+      # Behind Cloudflare: PORTFOLIO_CLIENT_IP_HEADER=CF-Connecting-IP and PORTFOLIO_PROXY_LOCATION=true, so the
+      # rate limit and the visits map see the visitor (location from Cloudflare's visitor location headers).
+      ReverseProxy__ClientIpHeader: ${PORTFOLIO_CLIENT_IP_HEADER:-X-Forwarded-For}
+      Visitors__UseProxyLocation: ${PORTFOLIO_PROXY_LOCATION:-false}
       # Optional read-only token to raise the GitHub API limit; the cache works without it.
       GitHub__Token: ${PORTFOLIO_GITHUB_TOKEN:-}
     ports:

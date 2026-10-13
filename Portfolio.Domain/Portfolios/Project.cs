@@ -16,4 +16,6 @@ public sealed record Project
     public bool Featured { get; init; }
     public string[] Highlights { get; init; } = [];
     public ProjectLink[] Links { get; init; } = [];
+    /// <summary>Id of the position in which the work was done; empty for personal projects.</summary>
+    public string ExperienceId { get; init; } = "";
 }

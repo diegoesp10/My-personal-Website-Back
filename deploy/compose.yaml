@@ -1,0 +1,81 @@
+name: diego-portfolio
+
+# Production stack of diegoespinarodriguez.com on the server (Ubuntu with Docker). scripts/Deploy-Server.ps1 copies
+# this file to ~/portfolio together with the images built locally; nothing is built on the server.
+# No port is open to the Internet: visitors arrive only through the Cloudflare Tunnel (service "tunnel"), so the
+# Cloudflare headers with the visitor address and location can be trusted. The web is also published on the server's
+# loopback for checks over SSH: ssh -L 8080:127.0.0.1:8080 diego-portfolio
+services:
+  api:
+    image: diego-portfolio-api:local
+    container_name: diego-portfolio-api
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ASPNETCORE_HTTP_PORTS: "8080"
+      Portfolio__DataPath: /app/data
+      ReverseProxy__Enabled: "true"
+      ReverseProxy__ClientIpHeader: CF-Connecting-IP
+      Visitors__UseProxyLocation: "true"
+      # Optional read-only token to raise the GitHub API limit; the cache works without it.
+      GitHub__Token: ${PORTFOLIO_GITHUB_TOKEN:-}
+    volumes:
+      - portfolio-data:/app/data
+    networks:
+      portfolio:
+        aliases:
+          - api
+    read_only: true
+    tmpfs:
+      - /tmp
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    restart: unless-stopped
+
+  web:
+    image: diego-portfolio-web:local
+    container_name: diego-portfolio-web
+    ports:
+      - "127.0.0.1:8080:8080"
+    networks:
+      - portfolio
+    read_only: true
+    tmpfs:
+      - /tmp
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    restart: unless-stopped
+
+  # Enabled by COMPOSE_PROFILES=tunnel in ~/portfolio/.env, written with the token by Deploy-Server.ps1 -SetTunnelToken.
+  # In Cloudflare, the public hostnames of the tunnel point to http://web:8080.
+  tunnel:
+    image: cloudflare/cloudflared:2026.9.3
+    container_name: diego-portfolio-tunnel
+    profiles:
+      - tunnel
+    command: tunnel --no-autoupdate run
+    environment:
+      TUNNEL_TOKEN: ${CLOUDFLARE_TUNNEL_TOKEN:-}
+    depends_on:
+      - web
+    networks:
+      - portfolio
+    read_only: true
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    restart: unless-stopped
+
+networks:
+  portfolio:
+    name: diego-portfolio-net
+
+# Created by install.sh before the content import.
+volumes:
+  portfolio-data:
+    name: diego-portfolio-data
+    external: true
