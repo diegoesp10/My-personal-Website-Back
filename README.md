@@ -67,7 +67,10 @@ La API queda en <http://127.0.0.1:5080>. Para ver la web, arranca el frontal con
 
 ## SEO
 
-Cada página llega al navegador con su propio título, descripción, dirección canónica, imagen para compartir y datos estructurados, generados por `SeoService` a partir del contenido:
+Cada página llega al navegador con su propio título, descripción, dirección canónica, imagen para compartir y datos estructurados, generados por `SeoService` a partir del contenido de su idioma:
+
+- Las direcciones llevan el idioma como primer segmento (`/es/proyectos`, `/en/proyectos`); una ruta sin prefijo se trata como español. `SiteRoutes` reúne esa convención.
+- Cada página indexable enlaza sus traducciones con `hreflang` (más `x-default`, la versión en español) y declara su `og:locale` (`es_ES` o `en_US`). Un proyecto o una entrada que solo existe en un idioma solo enlaza ese idioma.
 
 - La portada es una `ProfilePage` de la persona (`Person`), con su nombre completo, el nombre corto («Diego Espina»), el puesto, la ubicación, los perfiles de GitHub y LinkedIn (`sameAs`) y las tecnologías de las competencias (`knowsAbout`).
 - Los proyectos son `CreativeWork` y las entradas del diario, `BlogPosting` con su fecha; todas las páginas interiores llevan migas de pan.
@@ -75,7 +78,7 @@ Cada página llega al navegador con su propio título, descripción, dirección 
 - La imagen es la del proyecto si tiene una subida; si no, la imagen general del frontal.
 - Las rutas que no existen y el editor llevan `noindex` y no tienen dirección canónica.
 
-Las secciones fijas del frontal están en `SeoService` y deben coincidir con su router, igual que las de `SitemapService`.
+Las secciones fijas del frontal están en `SeoService`, con sus textos en español e inglés, y deben coincidir con su router, igual que las de `SitemapService`. El sitemap lista cada página en cada idioma con sus alternativas (`xhtml:link`).
 
 ## Estadísticas de visitas
 
@@ -125,7 +128,7 @@ node scripts/test-errors.mjs
 
 ## Datos y copias
 
-Al primer arranque se copia `seed.json` a `App_Data/portfolio.json`; las ediciones posteriores se guardan ahí con sustitución atómica y las imágenes en `App_Data/uploads/`. `App_Data` no está en Git: cópiala entera para hacer backup. En Docker, el volumen `diego-portfolio-data` debe incluirse en las copias. Esta versión está pensada para **una sola instancia**; para varias, sustituir la persistencia JSON por base de datos y almacenamiento de objetos.
+Cada idioma tiene su propio contenido, con los mismos identificadores: `App_Data/portfolio.json` (español) y `App_Data/portfolio.en.json` (inglés). Al arrancar, el idioma que aún no tiene archivo se crea desde su semilla (`seed.json`, `seed.en.json`) sin tocar los demás; las ediciones posteriores se guardan en el archivo de su idioma con sustitución atómica y las imágenes en `App_Data/uploads/`. `App_Data` no está en Git: cópiala entera para hacer backup. En Docker, el volumen `diego-portfolio-data` debe incluirse en las copias. Esta versión está pensada para **una sola instancia**; para varias, sustituir la persistencia JSON por base de datos y almacenamiento de objetos.
 
 ## Publicación
 
@@ -140,7 +143,7 @@ Al primer arranque se copia `seed.json` a `App_Data/portfolio.json`; las edicion
 ```
 
 - `deploy/compose.yaml` define el despliegue del servidor: `api`, `web` (publicada solo en el loopback del servidor) y `tunnel` (`cloudflared`, activo cuando `~/portfolio/.env` contiene el token). `deploy/install.sh` se ejecuta allí: carga las imágenes, importa `App_Data` si el volumen no tiene contenido y arranca el compose.
-- El primer despliegue importa `portfolio.json` y `uploads`; los siguientes conservan el contenido del servidor. Las estadísticas de visitas solo existen en el servidor y nunca se sustituyen.
+- El primer despliegue importa `portfolio.json`, `portfolio.en.json` y `uploads`; los siguientes conservan el contenido del servidor. Las estadísticas de visitas solo existen en el servidor y nunca se sustituyen.
 - En Cloudflare, los nombres de host públicos del túnel (`diegoespinarodriguez.com` y `www`) apuntan a `http://web:8080`. Para que el mapa de visitas tenga ubicación, activa «Add visitor location headers» en *Rules › Transform Rules › Managed Transforms*. No crees registros DNS con la IP del servidor.
 - Para revisar la web publicada sin pasar por Cloudflare: `ssh -L 8080:127.0.0.1:8080 diego-portfolio` y abre <http://127.0.0.1:8080>. Registros: `ssh diego-portfolio "cd portfolio; docker compose logs --tail 100"`.
 - Con CI/CD activo ([docs/CI-CD.md](docs/CI-CD.md)), cada merge a `main` publica la imagen en GHCR y, tras tu aprobación en el entorno `production`, la despliega por SSH. Desde entonces, las publicaciones de código se realizan con CI/CD. `Deploy-Server.ps1 -Backup` y `-SetTunnelToken` son operaciones de mantenimiento. Atención: `-ReplaceData` también sube las imágenes locales, incluso con `-SkipBuild`; por tanto sustituye las publicadas desde `main` además del contenido. Revisar esa operación antes de usarla con producción.
@@ -160,7 +163,7 @@ Al primer arranque se copia `seed.json` a `App_Data/portfolio.json`; las edicion
 ├── Portfolio.Infrastructure/   Repositorios JSON e imágenes, cliente HTTP de GitHub
 ├── Portfolio.Tests/            Pruebas xUnit
 ├── scripts/test-api.mjs        Prueba de integración de la API compilada
-├── seed.json                   Contenido inicial
+├── seed.json · seed.en.json     Contenido inicial en español e inglés
 ├── Dockerfile · compose.yaml   Imagen y contenedor de la API
 └── Start-Api.ps1 · Start-Docker.ps1
 ```
@@ -179,6 +182,6 @@ El workflow `.github/workflows/ci-cd.yml` comprueba las PR y publica una imagen 
 
 `Portfolio.Errors` centraliza los códigos y mensajes. La API devuelve Problem Details con correlación y mantiene un historial privado en el volumen persistente. El editor local incorpora una pestaña Errores con consulta protegida y mensajes en es/en; Production no permite acceder al historial por HTTP.
 
-`language` se envía en el cuerpo JSON, en GET como query y en multipart como campo. Español es el valor predeterminado. Las respuestas de los controladores añaden mensajes de operación localizados; el contenido editorial conserva su idioma original. Contratos, retención y pruebas en [docs/ERRORS-AND-LANGUAGE.md](docs/ERRORS-AND-LANGUAGE.md).
+`language` se envía en el cuerpo JSON, en GET como query y en multipart como campo. Español es el valor predeterminado. Elige el contenido que se lee o se guarda (`GET /api/portfolio?language=en`, `PUT` con `"language": "en"`) y el idioma de los mensajes de operación y error; guardar un idioma no modifica los demás. Contratos, retención y pruebas en [docs/ERRORS-AND-LANGUAGE.md](docs/ERRORS-AND-LANGUAGE.md).
 
 La ficha del proyecto `portfolio` incluye diez apartados sobre arquitectura, VM Ubuntu en Azure, Docker Compose, Cloudflare Tunnel, integración continua, protección de main, aprobación de producción, imágenes en GHCR, publicación SSH y recuperación. `project.sections` es una colección aditiva y editable de `{ title, text }`, vacía por defecto en contenido anterior.
