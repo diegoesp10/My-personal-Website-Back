@@ -458,6 +458,7 @@
       "tags": [
         "C#",
         ".NET 8 / 10",
+        ".NET Framework",
         "ASP.NET Core",
         "Web API",
         "Entity Framework Core",
@@ -472,7 +473,9 @@
         "SQL Server",
         "T-SQL",
         "Stored procedures",
+        "Relational modelling",
         "Indexes and execution plans",
+        "Query optimisation",
         "MySQL / MariaDB"
       ]
     },
@@ -486,7 +489,9 @@
         "SOLID",
         "Asynchronous processing",
         "Message queues",
-        "Idempotency"
+        "Retries",
+        "Idempotency",
+        "Systems integration"
       ]
     },
     {
@@ -494,6 +499,7 @@
       "title": "Quality and testing",
       "description": "Tests in the pipeline so that each delivery does not break the previous one.",
       "tags": [
+        "Unit tests",
         "xUnit",
         "Integration tests",
         "Production diagnostics"
@@ -519,8 +525,8 @@
       "title": "Applied AI and continuous learning",
       "description": "Claude and Codex every day: I try out the improvements from Anthropic and OpenAI and bring them into my work. I install LLMs on my machines to learn how to manage data and run models locally.",
       "tags": [
-        "Claude · Anthropic",
-        "Codex · OpenAI",
+        "Claude (Anthropic)",
+        "Codex (OpenAI)",
         "Local LLMs",
         "Ollama",
         "Local inference",
@@ -536,8 +542,24 @@
         "Meta / WhatsApp Business API",
         "React",
         "TypeScript",
+        "JavaScript",
         "WordPress",
         "PHP"
+      ]
+    },
+    {
+      "id": "herramientas",
+      "title": "Tools and methods",
+      "description": "What goes with the code day to day.",
+      "tags": [
+        "Git",
+        "GitHub",
+        "Azure Repos",
+        "Agile",
+        "Scrum / Kanban",
+        "VB.NET",
+        "Crystal Reports",
+        "Solmicro Expertis"
       ]
     }
   ],
