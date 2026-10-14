@@ -12,6 +12,9 @@ public sealed class SecurityHeadersMiddleware(RequestDelegate next)
     {
         var headers = context.Response.Headers;
         var isApi = context.Request.Path.StartsWithSegments("/api");
+        // HSTS for the responses Nginx proxies (/api, /uploads, /sitemap.xml). Browsers only honour it over HTTPS,
+        // which is what visitors get through Cloudflare, so it is sent always; subdomains are not included.
+        headers.StrictTransportSecurity = "max-age=31536000";
         headers.XContentTypeOptions = "nosniff";
         headers.XFrameOptions = "DENY";
         headers["Referrer-Policy"] = "strict-origin-when-cross-origin";
