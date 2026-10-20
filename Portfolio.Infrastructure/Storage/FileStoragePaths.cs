@@ -19,6 +19,14 @@ public sealed class FileStoragePaths(IOptions<FileStorageOptions> options)
     public string SeedFileFor(string language)
         => Path.Combine(Path.GetDirectoryName(SeedFile)!, LocalizedName(Path.GetFileNameWithoutExtension(SeedFile), language));
 
+    /// <summary>CV of a language, published with the seeds: cv/CV_Diego_Espina_ES.pdf, cv/CV_Diego_Espina_EN.pdf.</summary>
+    public string CvFileFor(string language)
+    {
+        if (!ContentLanguage.IsSupported(language))
+            throw new ArgumentOutOfRangeException(nameof(language), language, "Unsupported content language.");
+        return Path.Combine(Path.GetDirectoryName(SeedFile)!, "cv", $"CV_Diego_Espina_{language.ToUpperInvariant()}.pdf");
+    }
+
     private static string LocalizedName(string name, string language)
     {
         if (!ContentLanguage.IsSupported(language))

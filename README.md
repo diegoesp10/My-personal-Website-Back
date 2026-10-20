@@ -24,6 +24,7 @@ Portfolio.Tests          → Application (xUnit)
 | `PUT /api/portfolio` | Guarda el contenido. Solo editor local (ver abajo); `409` si otra pestaña guardó antes. Valida enlaces (solo http/https), correo, teléfono (para enlaces `tel:`), fechas de experiencia y límites de tamaño. |
 | `POST /api/uploads` | Sube PNG, JPEG o WebP de hasta 8 MB, validando la firma del archivo. Solo editor local. |
 | `GET /uploads/{nombre}` | Imágenes subidas, con caché inmutable (los nombres son aleatorios). |
+| `GET /api/cv?language=` | CV en PDF del idioma pedido, como descarga (`CV_Diego_Espina_ES.pdf`, `CV_Diego_Espina_EN.pdf`). Los PDF viven en `cv/` y se publican con la imagen; para actualizarlos, sustituye el archivo y vuelve a construir. `404` si falta el del idioma. |
 | `GET /api/github` | Repositorios públicos, lenguajes y commits recientes de GitHub. Caché de 30 min; si GitHub falla sirve el último resultado (`stale: true`) y espera antes de reintentar. Siempre `200`: `available: false` si no hay datos. |
 | `GET /sitemap.xml` | Sitemap con las páginas, proyectos y entradas del diario. |
 | `GET /api/seo/page?path=` | Metadatos de una ruta del frontal: título, descripción, dirección canónica, imagen para compartir y datos schema.org (`Person`, `WebSite`, página, migas de pan, proyecto o artículo). El frontal los aplica al navegar. Las rutas desconocidas y el editor salen como no indexables. |

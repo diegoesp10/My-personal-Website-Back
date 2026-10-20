@@ -11,6 +11,7 @@
     <PackageReference Include="xunit.runner.visualstudio" Version="3.1.5" />
     <Content Include="../seed.json" Link="seed.json" CopyToOutputDirectory="PreserveNewest" />
     <Content Include="../seed.en.json" Link="seed.en.json" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="../cv/*.pdf" LinkBase="cv" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
   <ItemGroup>
     <Using Include="Xunit" />
