@@ -1,5 +1,6 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Portfolio.Application.Cv;
 using Portfolio.Application.GitHub;
 using Portfolio.Application.Errors;
 using Portfolio.Errors.Registry;
@@ -17,6 +18,7 @@ public static class DependencyInjection
     {
         services.AddScoped<IPortfolioService, PortfolioService>();
         services.AddScoped<IImageService, ImageService>();
+        services.AddScoped<ICvService, CvService>();
         services.AddScoped<ISitemapService, SitemapService>();
         services.AddScoped<ISeoService, SeoService>();
         services.AddSingleton<IPortfolioValidator, PortfolioValidator>();

@@ -126,6 +126,17 @@ try {
   assert.equal((await fetch(`${base}/api/missing`)).status, 404);
   assert.equal((await fetch(`${base}/uploads/missing.png`)).status, 404);
 
+  // CV: one PDF per language, downloaded with its own file name; unsupported languages are rejected.
+  for (const [language, name] of [['es', 'CV_Diego_Espina_ES.pdf'], ['en', 'CV_Diego_Espina_EN.pdf']]) {
+    const cv = await fetch(`${base}/api/cv?language=${language}`);
+    assert.equal(cv.status, 200);
+    assert.equal(cv.headers.get('content-type'), 'application/pdf');
+    assert.match(cv.headers.get('content-disposition'), new RegExp(`^attachment; filename=${name}`));
+    assert.equal(Buffer.from(await cv.arrayBuffer()).subarray(0, 5).toString(), '%PDF-');
+  }
+  assert.match((await fetch(`${base}/api/cv`)).headers.get('content-disposition'), /CV_Diego_Espina_ES\.pdf/);
+  assert.equal((await fetch(`${base}/api/cv?language=fr`)).status, 400);
+
   // Search and social metadata: SSI fragment for Nginx and JSON for the frontend, escaped and built from the content.
   const tricky = { ...saved.projects[0], title: 'Prueba </script><b>"&', image: image.url };
   const withProject = await put({ ...saved, projects: [tricky, ...saved.projects.slice(1)] });
@@ -193,7 +204,7 @@ try {
   assert.equal((await fetch(`${base}/api/openapi/v1.json`)).status, 404);
   visitors = await (await fetch(`${base}/api/visitors`)).json();
   assert.equal(visitors.visits, 2);
-  console.log('OK: lectura con ETag, sitemap, GitHub desactivado, validación, protección de escritura, concurrencia, imágenes, metadatos SEO, visitas anónimas, persistencia tras reinicio y modo Production. Datos de prueba aislados.');
+  console.log('OK: lectura con ETag, sitemap, GitHub desactivado, validación, protección de escritura, concurrencia, imágenes, CV por idioma, metadatos SEO, visitas anónimas, persistencia tras reinicio y modo Production. Datos de prueba aislados.');
 } finally {
   await stop();
 }
