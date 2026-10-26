@@ -20,11 +20,17 @@ namespace Portfolio.Infrastructure;
 public static class DependencyInjection
 {
     public static IServiceCollection AddInfrastructure(this IServiceCollection services,
-        IConfiguration configuration, string defaultDataPath, string seedPath)
+        IConfiguration configuration, string defaultDataPath, string seedPath, string contentRootPath)
     {
         services.AddOptions<FileStorageOptions>()
             .Configure(options => { options.DataPath = defaultDataPath; options.SeedPath = seedPath; })
             .Bind(configuration.GetSection(FileStorageOptions.SectionName))
+            // Like App_Data, a relative content folder (../content in the local profile) is relative to the project.
+            .PostConfigure(options =>
+            {
+                if (!string.IsNullOrWhiteSpace(options.ContentPath) && !Path.IsPathRooted(options.ContentPath))
+                    options.ContentPath = Path.GetFullPath(Path.Combine(contentRootPath, options.ContentPath));
+            })
             .Validate(options => !string.IsNullOrWhiteSpace(options.DataPath) && !string.IsNullOrWhiteSpace(options.SeedPath),
                 "Deben configurarse las rutas del contenido y del archivo inicial.")
             .ValidateOnStart();

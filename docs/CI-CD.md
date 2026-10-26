@@ -3,7 +3,7 @@
 Cada repositorio tiene su workflow .github/workflows/ci-cd.yml y sus scripts bajo .github/scripts/.
 Las PR a main ejecutan las comprobaciones, sin credenciales SSH ni publicación de imágenes.
 Un push o merge a main ejecuta pruebas, construye la imagen linux/amd64 con el Dockerfile del repositorio y la publica en GHCR.
-El job de producción espera la aprobación configurada en GitHub y actualiza solo api (backend) o web (frontend).
+El job de producción espera la aprobación configurada en GitHub y actualiza api y el contenido versionado de content/ (backend) o web (frontend).
 También se puede ejecutar desde Actions > Run workflow en main.
 
 ## Credenciales: fuera de Git
@@ -99,9 +99,21 @@ Si también falla la restauración, el log lo indica expresamente para interveni
 La recreación de un servicio puede producir una breve interrupción; esto no implementa un despliegue blue/green.
 
 Los metadatos del despliegue quedan en .deploy/releases/api.json o web.json, sin credenciales.
-No se reemplazan portfolio.json, uploads, estadísticas ni el volumen diego-portfolio-data.
-Cambiar seed.json en Git no sustituye el contenido ya persistido; una actualización de contenido requiere su propio proceso.
+Las pipelines de imágenes no tocan portfolio.json, uploads, estadísticas ni el volumen diego-portfolio-data.
 No se ejecuta -ReplaceData, docker compose down -v ni una limpieza de imágenes en estas pipelines.
+
+## Contenido (backend)
+
+content/ contiene el contenido publicado: portfolio.json, portfolio.en.json y uploads/. El editor local guarda ahí, así que un post o una imagen llega a producción con su PR.
+En la PR, Backend checks valida el contenido con las pruebas y con pack-content.mjs, que además exige que toda imagen referenciada esté versionada.
+Tras desplegar api, el mismo job ejecuta deploy-over-ssh.sh con DEPLOY_SERVICE=content:
+
+1. En el runner, pack-content.mjs toma solo los archivos de idioma y las imágenes con el nombre que genera la API, y fija como revisión (ETag) un hash del contenido.
+2. El archivo comprimido viaja por una conexión SSH propia a .deploy/incoming/, y deploy-content.sh se ejecuta con el mismo bloqueo que los despliegues de imágenes.
+3. deploy-content.sh rechaza enlaces y nombres inesperados. Con la imagen de la API y sin red, guarda en backups/ del volumen la versión anterior de cada idioma que cambia y coloca la nueva con un renombrado atómico, sin reiniciar la API. Las imágenes nuevas se añaden; las existentes no se sobrescriben ni se borran.
+4. Comprueba /api/portfolio en cada idioma. Si falla, restaura las copias de esta ejecución y el workflow termina con error.
+
+Si el contenido no cambió, no se toca el volumen. Los metadatos quedan en .deploy/releases/content.json. visitors.json, errors.json y el resto de datos de ejecución nunca se envían ni se modifican.
 
 ## Proteger main
 

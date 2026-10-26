@@ -65,6 +65,34 @@ public sealed class LocalizedStorageTests : IDisposable
         Assert.False(await repository.TrySaveAsync(updated, english.Revision, ContentLanguage.English, CancellationToken.None));
     }
 
+    [Fact]
+    public async Task A_content_folder_keeps_content_and_images_apart_from_the_local_data()
+    {
+        var content = Path.Combine(_directory, "content");
+        var paths = new FileStoragePaths(Options.Create(new FileStorageOptions
+        {
+            DataPath = Path.Combine(_directory, "data"),
+            SeedPath = Path.Combine(AppContext.BaseDirectory, "seed.json"),
+            ContentPath = content,
+        }));
+
+        await new FileStorageInitializer(paths).StartAsync(CancellationToken.None);
+
+        Assert.Equal(Path.Combine(content, "portfolio.json"), paths.PortfolioFileFor(ContentLanguage.Spanish));
+        Assert.Equal(Path.Combine(content, "uploads"), paths.UploadsDirectory);
+        Assert.Equal(Path.Combine(_directory, "data", "visitors.json"), paths.VisitorsFile);
+        Assert.True(File.Exists(Path.Combine(content, "portfolio.en.json")));
+        Assert.True(Directory.Exists(paths.UploadsDirectory));
+        Assert.Empty(Directory.EnumerateFileSystemEntries(paths.DirectoryPath));
+    }
+
+    [Fact]
+    public void Without_a_content_folder_everything_stays_in_the_data_folder()
+    {
+        Assert.Equal(_paths.DirectoryPath, _paths.ContentDirectory);
+        Assert.Equal(Path.Combine(_paths.DirectoryPath, "uploads"), _paths.UploadsDirectory);
+    }
+
     public void Dispose()
     {
         if (Directory.Exists(_directory)) Directory.Delete(_directory, recursive: true);

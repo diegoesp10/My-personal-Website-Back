@@ -3,49 +3,9 @@
 #   install.sh [--replace-data]  loads the uploaded images, imports the content into the data volume when it is empty
 #                                (or replaces it, keeping the previous one in backups/) and (re)starts the stack.
 #   install.sh --set-token       reads the Cloudflare Tunnel token from stdin, stores it in .env and starts the tunnel.
-#   install.sh --content-only    replaces only the content with the uploaded data.tgz, keeping the previous one in
-#                                backups/, without touching images or containers.
 # The visit statistics (visitors.json) live only on the server and are never replaced.
 set -euo pipefail
 cd "$(dirname "$0")"
-
-if [ "${1:-}" = "--content-only" ]; then
-  [ -f data.tgz ] || { echo 'Falta data.tgz con el contenido.' >&2; exit 1; }
-  echo '== Contenido'
-  # The API reads the files on every request, so each language is moved into place with an atomic rename while it runs.
-  docker run --rm --user 0 --entrypoint sh \
-    --mount type=volume,source=diego-portfolio-data,target=/app/data \
-    --mount type=bind,source="$PWD/data.tgz",target=/import/data.tgz,readonly \
-    diego-portfolio-api:local -c '
-      set -e
-      stage=/app/data/.import
-      rm -rf "$stage"
-      mkdir -p "$stage" /app/data/backups
-      tar -xzf /import/data.tgz -C "$stage"
-      stamp=$(date +%Y%m%d-%H%M%S)
-      for path in "$stage"/portfolio.json "$stage"/portfolio.*.json; do
-        [ -f "$path" ] || continue
-        file=${path##*/}
-        if [ -e "/app/data/$file" ]; then cp "/app/data/$file" "/app/data/backups/${file%.json}-$stamp.json"; fi
-        chown app:app "$path"
-        chmod 644 "$path"
-        mv "$path" "/app/data/$file"
-        echo "Publicado $file (copia anterior en backups/)."
-      done
-      if [ -d "$stage/uploads" ]; then
-        mkdir -p /app/data/uploads
-        cp -R "$stage/uploads/." /app/data/uploads/
-      fi
-      rm -rf "$stage"
-      chown -R app:app /app/data/uploads /app/data/backups'
-  rm data.tgz
-  for language in es en; do
-    curl -fsS -o /dev/null "http://127.0.0.1:8080/api/portfolio?language=$language" \
-      || { echo "La API no sirve el contenido en $language: revisa backups/ en el volumen." >&2; exit 1; }
-  done
-  echo 'Contenido publicado y servido por la API.'
-  exit 0
-fi
 
 if [ "${1:-}" = "--set-token" ]; then
   # Accepts the token alone or the whole command shown by Cloudflare (docker run ... --token eyJ...).

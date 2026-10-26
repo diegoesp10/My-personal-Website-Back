@@ -8,7 +8,7 @@ COPY Portfolio.Domain/Portfolio.Domain.csproj Portfolio.Domain/
 COPY Portfolio.Errors/Portfolio.Errors.csproj Portfolio.Errors/
 COPY Portfolio.Infrastructure/Portfolio.Infrastructure.csproj Portfolio.Infrastructure/
 RUN dotnet restore Portfolio.Api/Portfolio.Api.csproj
-COPY seed.json seed.en.json ./
+COPY content/portfolio.json content/portfolio.en.json content/
 COPY cv/ cv/
 COPY Portfolio.Api/ Portfolio.Api/
 COPY Portfolio.Application/ Portfolio.Application/

@@ -1,5 +1,5 @@
 {
-  "revision": "initial",
+  "revision": "9464a9132f3e43f690fa0a54f6de4c38",
   "profile": {
     "name": "Diego Espina Rodríguez",
     "role": "Backend Developer · .NET / Azure",
@@ -450,6 +450,29 @@
       "end": "2023"
     }
   ],
+  "entries": [
+    {
+      "id": "actualizar-el-tunel-de-cloudflare",
+      "title": "Certificados comprometidos y la actualización del túnel de Cloudflare",
+      "date": "2026-10-26",
+      "category": "Construyendo",
+      "text": "Ocho certificados intermedios de eMudhra resultaron tener claves privadas débiles, y hubo que actualizar el túnel de Cloudflare que une la máquina virtual de Azure con diegoespinarodriguez.com.\n\nQuien obtenga esas claves puede emitir certificados que suplanten cualquier web. cloudflared, el conector del túnel, confiaba en ellos en las versiones anteriores a la 2026.10.2, y Cloudflare pidió actualizar todas las instancias. No se detectó explotación activa.\n\nAquí el túnel es la única entrada: la máquina virtual no tiene puertos abiertos y todas las visitas llegan por él. cloudflared corre como un contenedor del docker compose, con la versión fijada (2026.9.3) y sin actualización automática.\n\nEl despliegue con GitHub Actions solo publica la API y el frontal, así que el túnel se actualizó a mano por SSH: en el compose de la máquina virtual, la imagen pasó a cloudflare/cloudflared:2026.10.3 y se recreó solo ese contenedor. La web dejó de responder unos segundos. El mismo cambio está en el repositorio, para que el compose versionado coincida con el del servidor.\n\nEl túnel entrega el tráfico al frontal por HTTP dentro de la red de Docker, así que ningún certificado de origen se vio afectado y no hubo que tocar la verificación TLS. La lección: fijar versiones obliga a seguir los avisos de seguridad de lo que se fija."
+    },
+    {
+      "id": "una-web-con-backend-propio",
+      "title": "Por qué mi web tiene backend propio",
+      "date": "2026-10-12",
+      "category": "Construyendo",
+      "text": "Una web personal podría ser un HTML estático. He preferido tratarla como un proyecto más, con las mismas decisiones que tomaría en un producto real.\n\nLa API está separada en Domain, Application, Infrastructure y API. Los controladores solo traducen HTTP; las reglas viven en servicios y la persistencia en repositorios. El contenido se guarda con un número de revisión, así que dos ediciones simultáneas no se pisan, y esa misma revisión sirve de ETag para que el navegador no descargue lo que ya tiene.\n\nLa sección de GitHub consulta la API pública con caché en memoria. Si GitHub falla o limita las peticiones, se sirve el último resultado válido y no se reintenta en bucle. El frontal y la API viven en repositorios y contenedores distintos, sin usuario root y con sistema de archivos de solo lectura."
+    },
+    {
+      "id": "lo-que-me-llevo-del-campo",
+      "title": "Lo que me llevo del campo al código",
+      "date": "2026-10-11",
+      "category": "Personal",
+      "text": "Juego al fútbol federado en competición y entreno a diario en el gimnasio. Fuera de la pantalla también hay método.\n\nDel campo me llevo la constancia de repetir bien lo básico, la disciplina de prepararse antes de que haga falta y la idea de que el equipo importa más que la jugada individual. En el código se traduce en tests antes de desplegar, en medir antes de optimizar y en dejar el trabajo fácil de entender para quien venga después."
+    }
+  ],
   "skills": [
     {
       "id": "lenguajes",
@@ -561,29 +584,6 @@
         "Crystal Reports",
         "Solmicro Expertis"
       ]
-    }
-  ],
-  "entries": [
-    {
-      "id": "actualizar-el-tunel-de-cloudflare",
-      "title": "Certificados comprometidos y la actualización del túnel de Cloudflare",
-      "date": "2026-10-26",
-      "category": "Construyendo",
-      "text": "Ocho certificados intermedios de eMudhra resultaron tener claves privadas débiles, y hubo que actualizar el túnel de Cloudflare que une la máquina virtual de Azure con diegoespinarodriguez.com.\n\nQuien obtenga esas claves puede emitir certificados que suplanten cualquier web. cloudflared, el conector del túnel, confiaba en ellos en las versiones anteriores a la 2026.10.2, y Cloudflare pidió actualizar todas las instancias. No se detectó explotación activa.\n\nAquí el túnel es la única entrada: la máquina virtual no tiene puertos abiertos y todas las visitas llegan por él. cloudflared corre como un contenedor del docker compose, con la versión fijada (2026.9.3) y sin actualización automática.\n\nEl despliegue con GitHub Actions solo publica la API y el frontal, así que el túnel se actualizó a mano por SSH: en el compose de la máquina virtual, la imagen pasó a cloudflare/cloudflared:2026.10.3 y se recreó solo ese contenedor. La web dejó de responder unos segundos. El mismo cambio está en el repositorio, para que el compose versionado coincida con el del servidor.\n\nEl túnel entrega el tráfico al frontal por HTTP dentro de la red de Docker, así que ningún certificado de origen se vio afectado y no hubo que tocar la verificación TLS. La lección: fijar versiones obliga a seguir los avisos de seguridad de lo que se fija."
-    },
-    {
-      "id": "una-web-con-backend-propio",
-      "title": "Por qué mi web tiene backend propio",
-      "date": "2026-10-12",
-      "category": "Construyendo",
-      "text": "Una web personal podría ser un HTML estático. He preferido tratarla como un proyecto más, con las mismas decisiones que tomaría en un producto real.\n\nLa API está separada en Domain, Application, Infrastructure y API. Los controladores solo traducen HTTP; las reglas viven en servicios y la persistencia en repositorios. El contenido se guarda con un número de revisión, así que dos ediciones simultáneas no se pisan, y esa misma revisión sirve de ETag para que el navegador no descargue lo que ya tiene.\n\nLa sección de GitHub consulta la API pública con caché en memoria. Si GitHub falla o limita las peticiones, se sirve el último resultado válido y no se reintenta en bucle. El frontal y la API viven en repositorios y contenedores distintos, sin usuario root y con sistema de archivos de solo lectura."
-    },
-    {
-      "id": "lo-que-me-llevo-del-campo",
-      "title": "Lo que me llevo del campo al código",
-      "date": "2026-10-11",
-      "category": "Personal",
-      "text": "Juego al fútbol federado en competición y entreno a diario en el gimnasio. Fuera de la pantalla también hay método.\n\nDel campo me llevo la constancia de repetir bien lo básico, la disciplina de prepararse antes de que haga falta y la idea de que el equipo importa más que la jugada individual. En el código se traduce en tests antes de desplegar, en medir antes de optimizar y en dejar el trabajo fácil de entender para quien venga después."
     }
   ],
   "metrics": []

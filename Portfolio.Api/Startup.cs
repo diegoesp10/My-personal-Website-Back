@@ -12,7 +12,8 @@ public sealed class Startup(IConfiguration configuration, IWebHostEnvironment en
         services.AddApplication(configuration);
         services.AddInfrastructure(configuration,
             Path.GetFullPath(Path.Combine(environment.ContentRootPath, "..", "App_Data")),
-            Path.Combine(AppContext.BaseDirectory, "seed.json"));
+            Path.Combine(AppContext.BaseDirectory, "seed.json"),
+            environment.ContentRootPath);
         services.AddApi(configuration);
     }
 

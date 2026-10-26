@@ -53,7 +53,8 @@ La API queda en <http://127.0.0.1:5080>. Para ver la web, arranca el frontal con
 
 | Clave (variable de entorno) | Por defecto | Uso |
 | --- | --- | --- |
-| `Portfolio:DataPath` (`Portfolio__DataPath`) | `App_Data/` | Carpeta del contenido y las imágenes. |
+| `Portfolio:DataPath` (`Portfolio__DataPath`) | `App_Data/` | Datos de ejecución: visitas, historial de errores, base de geolocalización y, si no hay carpeta de contenido, también el contenido. |
+| `Portfolio:ContentPath` (`Portfolio__ContentPath`) | vacío (= `DataPath`) | Carpeta del contenido (`portfolio*.json` y `uploads/`). El perfil local la apunta a `../content`, la carpeta versionada; en Docker y producción va vacía y el contenido vive en el volumen. |
 | `Site:BaseUrl` | `https://diegoespinarodriguez.com` | Origen público para el sitemap, las direcciones canónicas y los datos schema.org. |
 | `Site:DefaultImage` | `/og-image.png` | Imagen para compartir (1200×630) cuando la página no tiene una propia; la sirve el frontal. |
 | `GitHub:User` | `diegoesp10` | Usuario cuya actividad pública se muestra. |
@@ -100,13 +101,13 @@ Con Docker Desktop en modo Linux:
 .\Start-Docker.ps1
 ```
 
-Construye la imagen, crea si faltan la red `diego-portfolio-net` y el volumen `diego-portfolio-data`, importa `App_Data` al volumen **solo si está vacío** y espera a que el contenedor esté sano. La API queda en <http://127.0.0.1:8081/api/health> (`$env:PORTFOLIO_API_PORT` cambia el puerto). Opciones: `-SkipBuild` reutiliza la imagen; `-ReplaceData` sustituye el contenido del volumen por el de `App_Data` y guarda el anterior en `backups/` dentro del volumen.
+Construye la imagen, crea si faltan la red `diego-portfolio-net` y el volumen `diego-portfolio-data`, importa `content/` al volumen **solo si está vacío** (y la base de geolocalización de `App_Data/geo`, si existe) y espera a que el contenedor esté sano. La API queda en <http://127.0.0.1:8081/api/health> (`$env:PORTFOLIO_API_PORT` cambia el puerto). Opciones: `-SkipBuild` reutiliza la imagen; `-ReplaceData` sustituye el contenido del volumen por el de `content/` y guarda el anterior en `backups/` dentro del volumen.
 
 | Imagen | Contenedor | Red | Volumen |
 | --- | --- | --- | --- |
 | `diego-portfolio-api:local` | `diego-portfolio-api` (alias `api`) | `diego-portfolio-net` | `diego-portfolio-data` → `/app/data` |
 
-El contenedor se ejecuta en Production, sin root, con sistema de archivos de solo lectura y sin capacidades. El contenido de `App_Data` nunca entra en la imagen. El contenedor web del frontal se une a la misma red y llega a esta API como `api`.
+El contenedor se ejecuta en Production, sin root, con sistema de archivos de solo lectura y sin capacidades. La imagen solo lleva `content/portfolio*.json` como contenido inicial de un volumen vacío; `App_Data` y las imágenes subidas nunca entran en ella. El contenedor web del frontal se une a la misma red y llega a esta API como `api`.
 
 ```powershell
 docker compose ps
@@ -124,12 +125,16 @@ node scripts/test-api.mjs
 node scripts/test-errors.mjs
 ```
 
-- `Portfolio.Tests`: validación del contenido (incluido `seed.json`), concurrencia por revisión, firmas de imagen, sitemap, metadatos SEO y servicio de GitHub (caché, modo degradado, espera entre reintentos, agregación de lenguajes).
+- `Portfolio.Tests`: validación del contenido (incluido el de `content/`), concurrencia por revisión, firmas de imagen, sitemap, metadatos SEO y servicio de GitHub (caché, modo degradado, espera entre reintentos, agregación de lenguajes).
 - `scripts/test-api.mjs`: arranca la API compilada en el puerto 5082 con datos aislados en `.test-data/` y comprueba ETag/304, sitemap, cabeceras, validaciones, protección del editor, conflictos, imágenes, metadatos SEO (fragmento HTML escapado y JSON), visitas anónimas (ubicación por cabeceras, Do Not Track, bots, que la IP no llegue al disco), persistencia tras reinicio y modo Production.
 
 ## Datos y copias
 
-Cada idioma tiene su propio contenido, con los mismos identificadores: `App_Data/portfolio.json` (español) y `App_Data/portfolio.en.json` (inglés). Al arrancar, el idioma que aún no tiene archivo se crea desde su semilla (`seed.json`, `seed.en.json`) sin tocar los demás; las ediciones posteriores se guardan en el archivo de su idioma con sustitución atómica y las imágenes en `App_Data/uploads/`. `App_Data` no está en Git: cópiala entera para hacer backup. En Docker, el volumen `diego-portfolio-data` debe incluirse en las copias. Esta versión está pensada para **una sola instancia**; para varias, sustituir la persistencia JSON por base de datos y almacenamiento de objetos.
+El contenido publicado está versionado en `content/`: `portfolio.json` (español), `portfolio.en.json` (inglés), con los mismos identificadores, y `uploads/` con las imágenes que sube el editor. En local, la API lee y guarda ahí directamente (`Portfolio:ContentPath`), así que cada cambio del editor es un cambio de Git: se revisa en la PR y se publica al fusionar en `main`. Cada guardado sustituye el archivo de su idioma de forma atómica.
+
+`.gitignore` solo admite en `content/` los archivos de idioma y las imágenes con el nombre que genera la API (`<32 hex>.png|jpg|webp`); cualquier otro archivo, como el temporal de un guardado, se queda fuera. Las imágenes se publican tal cual: quita los metadatos (ubicación GPS, cámara) antes de subirlas. `App_Data/` sigue fuera de Git y guarda solo datos locales de ejecución: visitas, historial de errores, base de geolocalización y copias. En Docker y en el servidor, contenido y datos viven en el volumen `diego-portfolio-data`, que debe incluirse en las copias.
+
+La imagen lleva `content/portfolio*.json` como semilla (`seed.json`, `seed.en.json`): al arrancar, el idioma que aún no tiene archivo se crea desde ella sin tocar los demás. Esta versión está pensada para **una sola instancia**; para varias, sustituir la persistencia JSON por base de datos y almacenamiento de objetos.
 
 ## Publicación
 
@@ -138,20 +143,26 @@ Cada idioma tiene su propio contenido, con los mismos identificadores: `App_Data
 ```powershell
 .\scripts\Deploy-Server.ps1                  # construye las dos imágenes en local, las sube y reinicia la web
 .\scripts\Deploy-Server.ps1 -SkipBuild       # sube las imágenes ya construidas
-.\scripts\Deploy-Server.ps1 -ReplaceData     # sustituye el contenido del servidor por App_Data (copia el anterior a backups/)
+.\scripts\Deploy-Server.ps1 -ReplaceData     # sustituye el contenido del servidor por content/ (copia el anterior a backups/)
 .\scripts\Deploy-Server.ps1 -SetTunnelToken  # pide el token del túnel, lo guarda en el servidor y arranca el túnel
 .\scripts\Deploy-Server.ps1 -Backup          # descarga una copia de los datos del servidor
-.\scripts\Deploy-Server.ps1 -ContentOnly     # publica solo el contenido de App_Data (copia el anterior a backups/)
+.\scripts\Deploy-Server.ps1 -ContentOnly     # publica content/ ahora, igual que el CI/CD (copia el anterior a backups/)
 ```
 
-**Publicar contenido.** En producción el editor está desactivado, así que el contenido se edita en local (`/editor`) y se sube con `-ContentOnly`: empaqueta `portfolio.json`, `portfolio.en.json` y `uploads`, guarda en `backups/` del volumen la versión anterior de cada idioma y coloca la nueva con un renombrado atómico, sin parar la API. No sube imágenes ni el Compose y no reinicia contenedores, de modo que se mantiene lo desplegado desde `main`. Sustituye todo el contenido del servidor por el local, así que el local debe estar al día: el servidor no se edita por otra vía, y `-Backup` descarga una copia si hace falta comparar. Los cambios de `seed.json` no llegan a producción por sí solos.
+**Publicar contenido (un post del diario, un proyecto, una imagen).** En producción el editor está desactivado, así que el contenido se edita en local y llega a producción con Git:
 
-- `deploy/compose.yaml` define el despliegue del servidor: `api`, `web` (publicada solo en el loopback del servidor) y `tunnel` (`cloudflared`, activo cuando `~/portfolio/.env` contiene el token). `deploy/install.sh` se ejecuta allí: carga las imágenes, importa `App_Data` si el volumen no tiene contenido y arranca el compose.
-- El primer despliegue importa `portfolio.json`, `portfolio.en.json` y `uploads`; los siguientes conservan el contenido del servidor. Las estadísticas de visitas solo existen en el servidor y nunca se sustituyen.
+1. Arranca la API (`Start-Api.ps1`) y el frontal (`npm run dev`) y edita en <http://127.0.0.1:5173/editor>. Guardar escribe en `content/`.
+2. Haz commit de `content/` en `develop` y abre la PR a `main`. El diff muestra el cambio, y «Backend checks» valida el contenido con las pruebas y `pack-content.mjs`, que comprueba además que toda imagen referenciada esté versionada.
+3. Al fusionar y aprobar el despliegue en `production`, el job de despliegue publica la API y después el contenido (`deploy-content.sh`). Si algún idioma cambió, guarda la versión anterior en `backups/` del volumen, coloca la nueva con un renombrado atómico sin parar la API y comprueba que la API la sirve; si no la sirve, restaura la anterior y el workflow falla. Si nada cambió, no toca el volumen. Las imágenes nuevas se añaden y las existentes nunca se sobrescriben ni se borran.
+
+La revisión de cada idioma (su ETag) se calcula al publicar a partir del propio contenido, de modo que cualquier cambio llega al navegador aunque se edite el JSON a mano. `-ContentOnly` sigue el mismo camino desde tu equipo, para una corrección urgente entre merges; el siguiente merge vuelve a publicar lo que haya en `main`. Las visitas y el historial de errores del servidor nunca se tocan.
+
+- `deploy/compose.yaml` define el despliegue del servidor: `api`, `web` (publicada solo en el loopback del servidor) y `tunnel` (`cloudflared`, activo cuando `~/portfolio/.env` contiene el token). `deploy/install.sh` se ejecuta allí: carga las imágenes, importa `content/` si el volumen no tiene contenido y arranca el compose.
+- El primer despliegue importa `portfolio.json`, `portfolio.en.json` y `uploads`; desde ahí, el contenido lo publica el CI/CD. Las estadísticas de visitas solo existen en el servidor y nunca se sustituyen.
 - En Cloudflare, los nombres de host públicos del túnel (`diegoespinarodriguez.com` y `www`) apuntan a `http://web:8080`. Para que el mapa de visitas tenga ubicación, activa «Add visitor location headers» en *Rules › Transform Rules › Managed Transforms*. No crees registros DNS con la IP del servidor.
 - Para revisar la web publicada sin pasar por Cloudflare: `ssh -L 8080:127.0.0.1:8080 diego-portfolio` y abre <http://127.0.0.1:8080>. Registros: `ssh diego-portfolio "cd portfolio; docker compose logs --tail 100"`.
-- Con CI/CD activo ([docs/CI-CD.md](docs/CI-CD.md)), cada merge a `main` publica la imagen en GHCR y, tras tu aprobación en el entorno `production`, la despliega por SSH. Desde entonces, las publicaciones de código se realizan con CI/CD. `Deploy-Server.ps1 -Backup` y `-SetTunnelToken` son operaciones de mantenimiento, y `-ContentOnly` es la forma de publicar contenido. Atención: `-ReplaceData` también sube las imágenes locales, incluso con `-SkipBuild`; por tanto sustituye las publicadas desde `main` además del contenido. Para cambiar solo el contenido, usa `-ContentOnly`.
-- El CI/CD solo despliega `api` y `web`. Ni copia `deploy/compose.yaml` al servidor ni recrea `tunnel`, así que un cambio de versión de `cloudflared` se aplica a mano por SSH: actualizar la imagen en `~/portfolio/compose.yaml` y ejecutar `docker compose up -d tunnel`.
+- Con CI/CD activo ([docs/CI-CD.md](docs/CI-CD.md)), cada merge a `main` publica la imagen en GHCR y, tras tu aprobación en el entorno `production`, la despliega por SSH junto con el contenido. Desde entonces, código y contenido se publican con CI/CD. `Deploy-Server.ps1 -Backup` y `-SetTunnelToken` son operaciones de mantenimiento. Atención: `-ReplaceData` también sube las imágenes locales, incluso con `-SkipBuild`; por tanto sustituye las publicadas desde `main` además del contenido. Para cambiar solo el contenido, usa `-ContentOnly`.
+- El CI/CD despliega `api`, `web` y el contenido. Ni copia `deploy/compose.yaml` al servidor ni recrea `tunnel`, así que un cambio de versión de `cloudflared` se aplica a mano por SSH: actualizar la imagen en `~/portfolio/compose.yaml` y ejecutar `docker compose up -d tunnel`.
 - Copia de seguridad: `.\scripts\Deploy-Server.ps1 -Backup` descarga el volumen del servidor (contenido, imágenes y visitas) a `App_Data/backups/servidor-<fecha>.tgz`. Hazla antes de cada `-ReplaceData` o `-ContentOnly`.
 
 ## Rama main protegida
@@ -168,7 +179,8 @@ Cada idioma tiene su propio contenido, con los mismos identificadores: `App_Data
 ├── Portfolio.Infrastructure/   Repositorios JSON e imágenes, cliente HTTP de GitHub
 ├── Portfolio.Tests/            Pruebas xUnit
 ├── scripts/test-api.mjs        Prueba de integración de la API compilada
-├── seed.json · seed.en.json     Contenido inicial en español e inglés
+├── content/                    Contenido publicado (es, en) e imágenes; lo edita el editor local
+├── .github/scripts/            Despliegue: imágenes por digest, contenido (pack-content.mjs, deploy-content.sh)
 ├── Dockerfile · compose.yaml   Imagen y contenedor de la API
 └── Start-Api.ps1 · Start-Docker.ps1
 ```
