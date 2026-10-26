@@ -52,7 +52,7 @@ services:
   # Enabled by COMPOSE_PROFILES=tunnel in ~/portfolio/.env, written with the token by Deploy-Server.ps1 -SetTunnelToken.
   # In Cloudflare, the public hostnames of the tunnel point to http://web:8080.
   tunnel:
-    image: cloudflare/cloudflared:2026.9.3
+    image: cloudflare/cloudflared:2026.10.3
     container_name: diego-portfolio-tunnel
     profiles:
       - tunnel
