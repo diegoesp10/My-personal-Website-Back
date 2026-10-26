@@ -11,11 +11,12 @@ public sealed class PortfolioServiceTests
     {
         var repository = new InMemoryPortfolioRepository(PortfolioValidatorTests.LoadSeed());
         var service = new PortfolioService(repository, new PortfolioValidator());
+        var initial = repository.Current.Revision;
 
         var result = await service.SaveAsync(repository.Current, ContentLanguage.Spanish, CancellationToken.None);
 
         Assert.True(result.IsSuccess);
-        Assert.NotEqual("initial", result.Value!.Revision);
+        Assert.NotEqual(initial, result.Value!.Revision);
         Assert.Equal(result.Value.Revision, repository.Current.Revision);
     }
 
@@ -37,12 +38,13 @@ public sealed class PortfolioServiceTests
     {
         var repository = new InMemoryPortfolioRepository(PortfolioValidatorTests.LoadSeed());
         var service = new PortfolioService(repository, new PortfolioValidator());
+        var initial = repository.Current.Revision;
         var invalid = repository.Current with { Profile = repository.Current.Profile with { Name = "" } };
 
         var result = await service.SaveAsync(invalid, ContentLanguage.Spanish, CancellationToken.None);
 
         Assert.Equal(FailureKind.Validation, result.Failure);
-        Assert.Equal("initial", repository.Current.Revision);
+        Assert.Equal(initial, repository.Current.Revision);
     }
 
     [Fact]
@@ -50,14 +52,16 @@ public sealed class PortfolioServiceTests
     {
         var repository = new InMemoryPortfolioRepository(PortfolioValidatorTests.LoadSeed());
         var service = new PortfolioService(repository, new PortfolioValidator());
-        var english = PortfolioValidatorTests.LoadSeed(ContentLanguage.English);
+        var initial = repository.Current.Revision;
+        // The English slot of the repository starts with the Spanish content, so its revision is the expected one.
+        var english = PortfolioValidatorTests.LoadSeed(ContentLanguage.English) with { Revision = initial };
 
         var result = await service.SaveAsync(english, ContentLanguage.English, CancellationToken.None);
 
         Assert.True(result.IsSuccess);
         var saved = await service.GetAsync(ContentLanguage.English, CancellationToken.None);
         Assert.Equal(english.Profile.Intro, saved.Profile.Intro);
-        Assert.Equal("initial", repository.Current.Revision);
+        Assert.Equal(initial, repository.Current.Revision);
     }
 
     [Fact]

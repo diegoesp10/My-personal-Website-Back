@@ -45,7 +45,10 @@ jobs:
           bash -n .github/scripts/deploy-container.sh
           bash -n .github/scripts/deploy-over-ssh.sh
           bash -n .github/scripts/check-production.sh
+          bash -n .github/scripts/deploy-content.sh
           node .github/scripts/test-deployment.mjs
+      - name: Check the versioned content is publishable
+        run: node .github/scripts/pack-content.mjs content "$RUNNER_TEMP/content-check"
 
   publish:
     name: Build and publish image
@@ -93,7 +96,7 @@ jobs:
           cache-to: type=gha,mode=max
 
   deploy:
-    name: Deploy api to Azure VM
+    name: Deploy api and content to Azure VM
     needs: publish
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-24.04
@@ -122,6 +125,22 @@ jobs:
           IMAGE_REF: ${{ needs.publish.outputs.image }}@${{ needs.publish.outputs.digest }}
           REGISTRY_TOKEN: ${{ github.token }}
           REGISTRY_USER: ${{ github.repository_owner }}
+          SSH_HOST: ${{ secrets.SSH_HOST }}
+          SSH_USER: ${{ secrets.SSH_USER }}
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          SSH_KEY_PASSPHRASE: ${{ secrets.SSH_KEY_PASSPHRASE }}
+          SSH_KNOWN_HOSTS: ${{ secrets.SSH_KNOWN_HOSTS }}
+          SSH_PORT: ${{ vars.SSH_PORT || '22' }}
+          DEPLOY_PATH: ${{ vars.DEPLOY_PATH || 'portfolio' }}
+        run: bash .github/scripts/deploy-over-ssh.sh
+      - name: Set up Node.js
+        uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: '22'
+      - name: Publish versioned content over SSH
+        env:
+          DEPLOY_SERVICE: content
+          CONTENT_PATH: content
           SSH_HOST: ${{ secrets.SSH_HOST }}
           SSH_USER: ${{ secrets.SSH_USER }}
           SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}

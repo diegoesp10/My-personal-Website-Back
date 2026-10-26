@@ -3,11 +3,15 @@
 # Builds the API image here and the web image in the sibling folder "Mi Web Front", uploads both with
 # deploy/compose.yaml and deploy/install.sh to ~/portfolio and (re)starts the stack there.
 #   -SkipBuild       upload the existing local images
-#   -ReplaceData     replace the server content with App_Data/ (the previous one is kept in backups/ in the volume)
+#   -ReplaceData     replace the server content with content/ (the previous one is kept in backups/ in the volume)
 #   -SetTunnelToken  ask for the Cloudflare Tunnel token, store it on the server (~/portfolio/.env) and start the tunnel
 #   -Backup          download a copy of the server data volume (content, images and visits) to App_Data/backups
-# The first deployment imports App_Data when the server has no content; later ones keep the server content.
-param([string]$Server = 'diego-portfolio', [switch]$SkipBuild, [switch]$ReplaceData, [switch]$SetTunnelToken, [switch]$Backup)
+#   -ContentOnly     publish content/ now, exactly as CI/CD does after a merge to main (pack-content.mjs and
+#                    deploy-content.sh), without touching images or containers
+# The first deployment imports content/ when the server has no content; later ones keep the server content.
+# Since CI/CD, a merge to main publishes the content; -ContentOnly is for an urgent fix between merges.
+param([string]$Server = 'diego-portfolio', [switch]$SkipBuild, [switch]$ReplaceData, [switch]$SetTunnelToken, [switch]$Backup,
+    [switch]$ContentOnly)
 $ErrorActionPreference = 'Stop'
 $root = Split-Path $PSScriptRoot -Parent
 $frontRoot = Join-Path (Split-Path $root -Parent) 'Mi Web Front'
@@ -47,6 +51,36 @@ if ($Backup) {
     return
 }
 
+# Versioned content: what the local editor saves and CI/CD publishes.
+$data = Join-Path $root 'content'
+
+if ($ContentOnly) {
+    $commit = git -C $root rev-parse HEAD
+    if ($LASTEXITCODE -ne 0 -or $commit -notmatch '^[0-9a-f]{40}$') { throw 'No se pudo leer el commit actual.' }
+    if (git -C $root status --porcelain -- content) {
+        Write-Warning 'content/ tiene cambios sin commit: el próximo merge a main publicará lo que haya en main.'
+    }
+    New-Item -ItemType Directory -Force -Path $work | Out-Null
+    Get-ChildItem -LiteralPath $work | Remove-Item -Recurse -Force
+    $packed = Join-Path $work 'content'
+    Invoke-Native { node (Join-Path $root '.github/scripts/pack-content.mjs') $data $packed } 'El contenido no se puede publicar.'
+    $archive = Join-Path $work "content-$commit.tgz"
+    Invoke-Native { tar -czf $archive -C $packed . } 'No se pudo empaquetar el contenido.'
+    $script = Join-Path $work 'deploy-content.sh'
+    $text = [System.IO.File]::ReadAllText((Join-Path $root '.github/scripts/deploy-content.sh')) -replace "`r`n", "`n"
+    [System.IO.File]::WriteAllText($script, $text, (New-Object System.Text.UTF8Encoding($false)))
+
+    Write-Host '== Publicando contenido' -ForegroundColor Cyan
+    $incoming = 'portfolio/.deploy/incoming'
+    Invoke-Native { ssh $Server "mkdir -p $incoming" } "No hay conexión SSH con $Server. Revisa ~/.ssh/config."
+    Invoke-Native { scp -q $archive $script "${Server}:$incoming/" } 'No se pudo subir el contenido.'
+    Invoke-Native { ssh $Server "bash $incoming/deploy-content.sh $commit local/manual portfolio; s=`$?; rm -f $incoming/deploy-content.sh; exit `$s" } `
+        'La publicación del contenido falló en el servidor; si se restauró la versión anterior, el registro lo indica.'
+    Remove-Item -LiteralPath $work -Recurse -Force
+    Write-Host 'Contenido publicado.' -ForegroundColor Green
+    return
+}
+
 if (-not $SkipBuild) {
     if (-not (Test-Path -LiteralPath (Join-Path $frontRoot 'compose.yaml'))) { throw "No se encuentra el frontal en $frontRoot." }
     foreach ($folder in @($root, $frontRoot)) {
@@ -75,12 +109,11 @@ $files = @("$tar.gz")
 
 # Content: portfolio.json, portfolio.en.json and uploads. install.sh only uses it when the server has none or with
 # -ReplaceData.
-$data = Join-Path $root 'App_Data'
 if (Test-Path -LiteralPath (Join-Path $data 'portfolio.json')) {
     $items = @('portfolio.json')
     if (Test-Path -LiteralPath (Join-Path $data 'portfolio.en.json')) { $items += 'portfolio.en.json' }
     if (Test-Path -LiteralPath (Join-Path $data 'uploads')) { $items += 'uploads' }
-    Invoke-Native { tar -czf (Join-Path $work 'data.tgz') -C $data @items } 'No se pudo empaquetar App_Data.'
+    Invoke-Native { tar -czf (Join-Path $work 'data.tgz') -C $data @items } 'No se pudo empaquetar content/.'
     $files += (Join-Path $work 'data.tgz')
 }
 
