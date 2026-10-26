@@ -565,6 +565,13 @@
   ],
   "entries": [
     {
+      "id": "actualizar-el-tunel-de-cloudflare",
+      "title": "Certificados comprometidos y la actualización del túnel de Cloudflare",
+      "date": "2026-10-26",
+      "category": "Construyendo",
+      "text": "Ocho certificados intermedios de eMudhra resultaron tener claves privadas débiles, y hubo que actualizar el túnel de Cloudflare que une la máquina virtual de Azure con diegoespinarodriguez.com.\n\nQuien obtenga esas claves puede emitir certificados que suplanten cualquier web. cloudflared, el conector del túnel, confiaba en ellos en las versiones anteriores a la 2026.10.2, y Cloudflare pidió actualizar todas las instancias. No se detectó explotación activa.\n\nAquí el túnel es la única entrada: la máquina virtual no tiene puertos abiertos y todas las visitas llegan por él. cloudflared corre como un contenedor del docker compose, con la versión fijada (2026.9.3) y sin actualización automática.\n\nEl despliegue con GitHub Actions solo publica la API y el frontal, así que el túnel se actualizó a mano por SSH: en el compose de la máquina virtual, la imagen pasó a cloudflare/cloudflared:2026.10.3 y se recreó solo ese contenedor. La web dejó de responder unos segundos. El mismo cambio está en el repositorio, para que el compose versionado coincida con el del servidor.\n\nEl túnel entrega el tráfico al frontal por HTTP dentro de la red de Docker, así que ningún certificado de origen se vio afectado y no hubo que tocar la verificación TLS. La lección: fijar versiones obliga a seguir los avisos de seguridad de lo que se fija."
+    },
+    {
       "id": "una-web-con-backend-propio",
       "title": "Por qué mi web tiene backend propio",
       "date": "2026-10-12",
