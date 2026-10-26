@@ -141,14 +141,18 @@ Cada idioma tiene su propio contenido, con los mismos identificadores: `App_Data
 .\scripts\Deploy-Server.ps1 -ReplaceData     # sustituye el contenido del servidor por App_Data (copia el anterior a backups/)
 .\scripts\Deploy-Server.ps1 -SetTunnelToken  # pide el token del túnel, lo guarda en el servidor y arranca el túnel
 .\scripts\Deploy-Server.ps1 -Backup          # descarga una copia de los datos del servidor
+.\scripts\Deploy-Server.ps1 -ContentOnly     # publica solo el contenido de App_Data (copia el anterior a backups/)
 ```
+
+**Publicar contenido.** En producción el editor está desactivado, así que el contenido se edita en local (`/editor`) y se sube con `-ContentOnly`: empaqueta `portfolio.json`, `portfolio.en.json` y `uploads`, guarda en `backups/` del volumen la versión anterior de cada idioma y coloca la nueva con un renombrado atómico, sin parar la API. No sube imágenes ni el Compose y no reinicia contenedores, de modo que se mantiene lo desplegado desde `main`. Sustituye todo el contenido del servidor por el local, así que el local debe estar al día: el servidor no se edita por otra vía, y `-Backup` descarga una copia si hace falta comparar. Los cambios de `seed.json` no llegan a producción por sí solos.
 
 - `deploy/compose.yaml` define el despliegue del servidor: `api`, `web` (publicada solo en el loopback del servidor) y `tunnel` (`cloudflared`, activo cuando `~/portfolio/.env` contiene el token). `deploy/install.sh` se ejecuta allí: carga las imágenes, importa `App_Data` si el volumen no tiene contenido y arranca el compose.
 - El primer despliegue importa `portfolio.json`, `portfolio.en.json` y `uploads`; los siguientes conservan el contenido del servidor. Las estadísticas de visitas solo existen en el servidor y nunca se sustituyen.
 - En Cloudflare, los nombres de host públicos del túnel (`diegoespinarodriguez.com` y `www`) apuntan a `http://web:8080`. Para que el mapa de visitas tenga ubicación, activa «Add visitor location headers» en *Rules › Transform Rules › Managed Transforms*. No crees registros DNS con la IP del servidor.
 - Para revisar la web publicada sin pasar por Cloudflare: `ssh -L 8080:127.0.0.1:8080 diego-portfolio` y abre <http://127.0.0.1:8080>. Registros: `ssh diego-portfolio "cd portfolio; docker compose logs --tail 100"`.
-- Con CI/CD activo ([docs/CI-CD.md](docs/CI-CD.md)), cada merge a `main` publica la imagen en GHCR y, tras tu aprobación en el entorno `production`, la despliega por SSH. Desde entonces, las publicaciones de código se realizan con CI/CD. `Deploy-Server.ps1 -Backup` y `-SetTunnelToken` son operaciones de mantenimiento. Atención: `-ReplaceData` también sube las imágenes locales, incluso con `-SkipBuild`; por tanto sustituye las publicadas desde `main` además del contenido. Revisar esa operación antes de usarla con producción.
-- Copia de seguridad: `.\scripts\Deploy-Server.ps1 -Backup` descarga el volumen del servidor (contenido, imágenes y visitas) a `App_Data/backups/servidor-<fecha>.tgz`. Hazla antes de cada `-ReplaceData`.
+- Con CI/CD activo ([docs/CI-CD.md](docs/CI-CD.md)), cada merge a `main` publica la imagen en GHCR y, tras tu aprobación en el entorno `production`, la despliega por SSH. Desde entonces, las publicaciones de código se realizan con CI/CD. `Deploy-Server.ps1 -Backup` y `-SetTunnelToken` son operaciones de mantenimiento, y `-ContentOnly` es la forma de publicar contenido. Atención: `-ReplaceData` también sube las imágenes locales, incluso con `-SkipBuild`; por tanto sustituye las publicadas desde `main` además del contenido. Para cambiar solo el contenido, usa `-ContentOnly`.
+- El CI/CD solo despliega `api` y `web`. Ni copia `deploy/compose.yaml` al servidor ni recrea `tunnel`, así que un cambio de versión de `cloudflared` se aplica a mano por SSH: actualizar la imagen en `~/portfolio/compose.yaml` y ejecutar `docker compose up -d tunnel`.
+- Copia de seguridad: `.\scripts\Deploy-Server.ps1 -Backup` descarga el volumen del servidor (contenido, imágenes y visitas) a `App_Data/backups/servidor-<fecha>.tgz`. Hazla antes de cada `-ReplaceData` o `-ContentOnly`.
 
 ## Rama main protegida
 

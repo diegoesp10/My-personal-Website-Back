@@ -6,8 +6,11 @@
 #   -ReplaceData     replace the server content with App_Data/ (the previous one is kept in backups/ in the volume)
 #   -SetTunnelToken  ask for the Cloudflare Tunnel token, store it on the server (~/portfolio/.env) and start the tunnel
 #   -Backup          download a copy of the server data volume (content, images and visits) to App_Data/backups
+#   -ContentOnly     publish only the content of App_Data/ (what the local editor saves): the previous one is kept in
+#                    backups/ in the volume, and images and containers are left as GitHub Actions deployed them
 # The first deployment imports App_Data when the server has no content; later ones keep the server content.
-param([string]$Server = 'diego-portfolio', [switch]$SkipBuild, [switch]$ReplaceData, [switch]$SetTunnelToken, [switch]$Backup)
+param([string]$Server = 'diego-portfolio', [switch]$SkipBuild, [switch]$ReplaceData, [switch]$SetTunnelToken, [switch]$Backup,
+    [switch]$ContentOnly)
 $ErrorActionPreference = 'Stop'
 $root = Split-Path $PSScriptRoot -Parent
 $frontRoot = Join-Path (Split-Path $root -Parent) 'Mi Web Front'
@@ -47,7 +50,12 @@ if ($Backup) {
     return
 }
 
-if (-not $SkipBuild) {
+$data = Join-Path $root 'App_Data'
+if ($ContentOnly -and -not (Test-Path -LiteralPath (Join-Path $data 'portfolio.json'))) {
+    throw "No hay contenido local en $data. Arranca la API y guarda desde el editor."
+}
+
+if (-not $SkipBuild -and -not $ContentOnly) {
     if (-not (Test-Path -LiteralPath (Join-Path $frontRoot 'compose.yaml'))) { throw "No se encuentra el frontal en $frontRoot." }
     foreach ($folder in @($root, $frontRoot)) {
         Write-Host "== Construyendo $(Split-Path $folder -Leaf)" -ForegroundColor Cyan
@@ -60,22 +68,24 @@ if (-not $SkipBuild) {
 New-Item -ItemType Directory -Force -Path $work | Out-Null
 Get-ChildItem -LiteralPath $work | Remove-Item -Force
 
-Write-Host '== Empaquetando imágenes' -ForegroundColor Cyan
-$tar = Join-Path $work 'images.tar'
-Invoke-Native { docker save -o $tar diego-portfolio-api:local diego-portfolio-web:local } `
-    'No se pudieron exportar las imágenes. ¿Existen diego-portfolio-api:local y diego-portfolio-web:local?'
-$source = [System.IO.File]::OpenRead($tar)
-try {
-    $output = [System.IO.File]::Create("$tar.gz")
-    $gzip = New-Object System.IO.Compression.GZipStream($output, [System.IO.Compression.CompressionLevel]::Optimal)
-    try { $source.CopyTo($gzip) } finally { $gzip.Dispose(); $output.Dispose() }
-} finally { $source.Dispose() }
-Remove-Item -LiteralPath $tar
-$files = @("$tar.gz")
+$files = @()
+if (-not $ContentOnly) {
+    Write-Host '== Empaquetando imágenes' -ForegroundColor Cyan
+    $tar = Join-Path $work 'images.tar'
+    Invoke-Native { docker save -o $tar diego-portfolio-api:local diego-portfolio-web:local } `
+        'No se pudieron exportar las imágenes. ¿Existen diego-portfolio-api:local y diego-portfolio-web:local?'
+    $source = [System.IO.File]::OpenRead($tar)
+    try {
+        $output = [System.IO.File]::Create("$tar.gz")
+        $gzip = New-Object System.IO.Compression.GZipStream($output, [System.IO.Compression.CompressionLevel]::Optimal)
+        try { $source.CopyTo($gzip) } finally { $gzip.Dispose(); $output.Dispose() }
+    } finally { $source.Dispose() }
+    Remove-Item -LiteralPath $tar
+    $files += "$tar.gz"
+}
 
-# Content: portfolio.json, portfolio.en.json and uploads. install.sh only uses it when the server has none or with
-# -ReplaceData.
-$data = Join-Path $root 'App_Data'
+# Content: portfolio.json, portfolio.en.json and uploads. install.sh only uses it when the server has none, with
+# -ReplaceData or with -ContentOnly.
 if (Test-Path -LiteralPath (Join-Path $data 'portfolio.json')) {
     $items = @('portfolio.json')
     if (Test-Path -LiteralPath (Join-Path $data 'portfolio.en.json')) { $items += 'portfolio.en.json' }
@@ -84,8 +94,9 @@ if (Test-Path -LiteralPath (Join-Path $data 'portfolio.json')) {
     $files += (Join-Path $work 'data.tgz')
 }
 
-# Line endings: bash and compose run on Linux.
-foreach ($name in @('compose.yaml', 'install.sh')) {
+# Line endings: bash and compose run on Linux. -ContentOnly keeps the Compose file of the server.
+$scripts = if ($ContentOnly) { @('install.sh') } else { @('compose.yaml', 'install.sh') }
+foreach ($name in $scripts) {
     $text = [System.IO.File]::ReadAllText((Join-Path $root "deploy/$name")) -replace "`r`n", "`n"
     [System.IO.File]::WriteAllText((Join-Path $work $name), $text, (New-Object System.Text.UTF8Encoding($false)))
     $files += (Join-Path $work $name)
@@ -95,8 +106,8 @@ Write-Host '== Subiendo al servidor' -ForegroundColor Cyan
 Invoke-Native { ssh $Server 'mkdir -p portfolio' } "No hay conexión SSH con $Server. Revisa ~/.ssh/config."
 Invoke-Native { scp -q @files "${Server}:portfolio/" } 'No se pudieron subir los archivos.'
 
-$flag = if ($ReplaceData) { '--replace-data' } else { '' }
+$flag = if ($ContentOnly) { '--content-only' } elseif ($ReplaceData) { '--replace-data' } else { '' }
 Invoke-Native { ssh $Server "bash portfolio/install.sh $flag" } `
     'El despliegue falló en el servidor. Revisa los registros con: ssh diego-portfolio "cd portfolio; docker compose logs --tail 100"'
 Remove-Item -LiteralPath $work -Recurse -Force
-Write-Host 'Despliegue completado.' -ForegroundColor Green
+Write-Host $(if ($ContentOnly) { 'Contenido publicado.' } else { 'Despliegue completado.' }) -ForegroundColor Green
