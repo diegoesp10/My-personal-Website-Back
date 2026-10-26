@@ -1,5 +1,5 @@
 {
-  "revision": "45d3d868b14c4059b6515c0c4ec283dc",
+  "revision": "4d32e2f43857495ca177c5e064dd6eca",
   "profile": {
     "name": "Diego Espina Rodríguez",
     "role": "Backend Developer · .NET / Azure",
@@ -234,7 +234,7 @@
       "title": "diegoespinarodriguez.com",
       "category": "Full stack",
       "description": "Diseño, desarrollo y publicación de mi portfolio: .NET 10 y React en una VM Linux de Azure, con Docker, CI/CD y despliegues por SSH.",
-      "details": "Una web personal también puede demostrar cómo trabajo: desde la separación de responsabilidades en el código hasta la entrega y operación del software en producción. Aquí reúno backend, frontend, infraestructura y automatización en un sistema que desarrollo y mantengo.\n\nHe organizado el proyecto en dos repositorios y dos imágenes Docker, desplegadas en la misma máquina virtual de Azure. La publicación conecta GitHub Actions, GHCR, SSH y Docker Compose, con comprobaciones previas, main protegida, aprobación de producción y recuperación de la versión anterior si falla el despliegue. El contenido también está versionado en Git y llega a producción por la misma pipeline que el código.",
+      "details": "Una web personal también puede demostrar cómo trabajo: desde la separación de responsabilidades en el código hasta la entrega y operación del software en producción. Aquí reúno backend, frontend, infraestructura y automatización en un sistema que desarrollo y mantengo.\n\nHe organizado el proyecto en dos repositorios y dos imágenes Docker, desplegadas en la misma máquina virtual de Azure. La publicación conecta GitHub Actions, GHCR, SSH y Docker Compose, con comprobaciones previas, main protegida, aprobación de producción y recuperación de la versión anterior si falla el despliegue. El contenido también está versionado en Git y llega a producción por el mismo pipeline que el código.",
       "year": "2026",
       "status": "En evolución",
       "url": "",
@@ -265,7 +265,7 @@
         "Imágenes identificadas por commit y desplegadas por digest inmutable",
         "Credenciales SSH en secretos de GitHub y tokens temporales de registro",
         "Bloqueo compartido, comprobaciones HTTP y recuperación de la imagen anterior",
-        "Contenido versionado en Git y publicado por la pipeline, con copia y restauración automática",
+        "Contenido versionado en Git y publicado por el pipeline, con copia y restauración automática",
         "Volumen persistente para estadísticas, errores y el contenido en producción",
         "Catálogo de errores, correlación e historial privado con mensajes en español e inglés"
       ],
@@ -302,7 +302,7 @@
         },
         {
           "title": "main protegida y aprobación de producción",
-          "text": "Trabajo en develop y llevo los cambios a main mediante pull request. Las reglas de GitHub exigen las comprobaciones del repositorio antes del merge y bloquean el push directo, el borrado de main y la reescritura de su historial. Un hook local añade una confirmación antes del push y rechaza los envíos directos a main.\n\nTras el merge, la pipeline publica el artefacto, pero el job de despliegue espera mi aprobación en el entorno production. El entorno limita las publicaciones a main y requiere revisor sin permitir saltarse la protección como administrador. Antes de desplegar, un script comprueba que la aprobación está configurada y que el commit aprobado sigue siendo el actual main. Son dos decisiones separadas: integrar el cambio y autorizar su entrada en producción."
+          "text": "Trabajo en develop y llevo los cambios a main mediante pull request. Las reglas de GitHub exigen las comprobaciones del repositorio antes del merge y bloquean el push directo, el borrado de main y la reescritura de su historial. Un hook local añade una confirmación antes del push y rechaza los envíos directos a main.\n\nTras el merge, el pipeline publica el artefacto, pero el job de despliegue espera mi aprobación en el entorno production. El entorno limita las publicaciones a main y requiere revisor sin permitir saltarse la protección como administrador. Antes de desplegar, un script comprueba que la aprobación está configurada y que el commit aprobado sigue siendo el actual main. Son dos decisiones separadas: integrar el cambio y autorizar su entrada en producción."
         },
         {
           "title": "Imágenes trazables en GitHub Container Registry",
@@ -461,7 +461,7 @@
       "title": "Certificados intermedios comprometidos: cómo actualicé el túnel de Cloudflare",
       "date": "2026-10-26",
       "category": "Construyendo",
-      "text": "Cloudflare publicó un aviso de seguridad: ocho certificados intermedios de eMudhra tenían claves privadas débiles. Con ellas se pueden emitir certificados válidos para cualquier dominio y suplantar webs legítimas. La versión 2026.10.2 de cloudflared, el conector de Cloudflare Tunnel, es la corregida, y Cloudflare pidió actualizar todas las instancias. También indicó que no había detectado explotación activa en sus servicios.\n\nEn esta web el túnel es la única entrada del tráfico público: la máquina virtual de Azure no expone puertos a Internet para las visitas y todo llega a través de él. Un conector expuesto a una autoridad de certificación comprometida está justo en el punto más sensible, así que lo traté como prioritario.\n\ncloudflared corre como un contenedor del docker compose, con la versión fijada y sin actualizaciones automáticas. Es una decisión deliberada: despliegues reproducibles y ningún cambio que no haya revisado antes. La contrapartida es que actualizarlo depende de mí, porque el pipeline de GitHub Actions solo despliega la API y el frontal.\n\nHice el cambio a mano desde el acceso de administración del servidor: pasé la imagen a la versión corregida y recreé únicamente el contenedor del túnel, sin tocar la API ni el frontal. La web dejó de responder unos segundos. El mismo cambio quedó versionado en el repositorio, para que el compose del servidor y el del código no diverjan.\n\nEl alcance era acotado: el túnel entrega el tráfico al frontal por HTTP dentro de la red interna de Docker, así que los certificados de origen no estaban implicados y no hubo que cambiar la configuración TLS.\n\nLo que me llevo: fijar versiones sigue siendo la decisión correcta, pero convierte cada dependencia fijada en un compromiso. Hay que seguir sus avisos de seguridad y tener claro cómo actualizarla cuando queda fuera del pipeline habitual."
+      "text": "El 20 de octubre de 2026, Cloudflare publicó un aviso de seguridad: ocho certificados intermedios de eMudhra tenían claves privadas débiles. Con ellas se pueden emitir certificados válidos para cualquier dominio y suplantar webs legítimas. La versión 2026.10.2 de cloudflared, el conector de Cloudflare Tunnel, es la corregida, y Cloudflare pidió actualizar todas las instancias. También indicó que no había detectado explotación activa en sus servicios.\n\nEn esta web el túnel es la única entrada del tráfico público: la máquina virtual de Azure no expone puertos a Internet para las visitas y todo llega a través de él. Un conector expuesto a una autoridad de certificación comprometida está justo en el punto más sensible, así que lo traté como prioritario.\n\ncloudflared corre como un contenedor de Docker Compose, con la versión fijada y sin actualizaciones automáticas. Es una decisión deliberada: despliegues reproducibles y ningún cambio que no haya revisado antes. La contrapartida es que actualizarlo depende de mí: el pipeline de GitHub Actions despliega la API, el frontal y el contenido, pero no el túnel.\n\nHice el cambio a mano desde el acceso de administración del servidor: pasé la imagen a la versión corregida y recreé únicamente el contenedor del túnel, sin tocar la API ni el frontal. La web dejó de responder unos segundos. El mismo cambio quedó versionado en el repositorio, para que el compose del servidor y el del código no diverjan.\n\nEl alcance era acotado: el túnel entrega el tráfico al frontal por HTTP dentro de la red interna de Docker, así que los certificados de origen no estaban implicados y no hubo que cambiar la configuración TLS.\n\nLo que me llevo: fijar versiones sigue siendo la decisión correcta, pero convierte cada dependencia fijada en un compromiso. Hay que seguir sus avisos de seguridad y tener claro cómo actualizarla cuando queda fuera del pipeline habitual."
     },
     {
       "id": "una-web-con-backend-propio",
