@@ -1,5 +1,5 @@
 {
-  "revision": "5d29b4d272ff421999a14f4253c36e27",
+  "revision": "45d3d868b14c4059b6515c0c4ec283dc",
   "profile": {
     "name": "Diego Espina Rodríguez",
     "role": "Backend Developer · .NET / Azure",
@@ -234,7 +234,7 @@
       "title": "diegoespinarodriguez.com",
       "category": "Full stack",
       "description": "Diseño, desarrollo y publicación de mi portfolio: .NET 10 y React en una VM Linux de Azure, con Docker, CI/CD y despliegues por SSH.",
-      "details": "Una web personal también puede demostrar cómo trabajo: desde la separación de responsabilidades en el código hasta la entrega y operación del software en producción. Aquí reúno backend, frontend, infraestructura y automatización en un sistema que desarrollo y mantengo.\n\nHe organizado el proyecto en dos repositorios y dos imágenes Docker, desplegadas en la misma máquina virtual de Azure. La publicación conecta GitHub Actions, GHCR, SSH y Docker Compose, con comprobaciones previas, main protegida, aprobación de producción y recuperación de la imagen anterior si falla el despliegue.",
+      "details": "Una web personal también puede demostrar cómo trabajo: desde la separación de responsabilidades en el código hasta la entrega y operación del software en producción. Aquí reúno backend, frontend, infraestructura y automatización en un sistema que desarrollo y mantengo.\n\nHe organizado el proyecto en dos repositorios y dos imágenes Docker, desplegadas en la misma máquina virtual de Azure. La publicación conecta GitHub Actions, GHCR, SSH y Docker Compose, con comprobaciones previas, main protegida, aprobación de producción y recuperación de la versión anterior si falla el despliegue. El contenido también está versionado en Git y llega a producción por la misma pipeline que el código.",
       "year": "2026",
       "status": "En evolución",
       "url": "",
@@ -265,7 +265,8 @@
         "Imágenes identificadas por commit y desplegadas por digest inmutable",
         "Credenciales SSH en secretos de GitHub y tokens temporales de registro",
         "Bloqueo compartido, comprobaciones HTTP y recuperación de la imagen anterior",
-        "Volumen persistente para contenido, imágenes, estadísticas y errores",
+        "Contenido versionado en Git y publicado por la pipeline, con copia y restauración automática",
+        "Volumen persistente para estadísticas, errores y el contenido en producción",
         "Catálogo de errores, correlación e historial privado con mensajes en español e inglés"
       ],
       "links": [
@@ -289,7 +290,7 @@
         },
         {
           "title": "Contenedores y persistencia",
-          "text": "El Dockerfile del backend compila y publica la API en una etapa de construcción con el SDK de .NET 10. La imagen final utiliza el runtime de ASP.NET Core sobre Alpine y ejecuta la aplicación con un usuario sin privilegios. En el frontend, otra construcción por etapas genera los archivos de React y los entrega a Nginx.\n\nLos servicios api y web se ejecutan con sistema de archivos de solo lectura, sin capacidades Linux adicionales y con no-new-privileges. La comunicación interna pasa por diego-portfolio-net. El volumen diego-portfolio-data conserva el contenido del portfolio, las imágenes subidas, las estadísticas y el historial de errores: estos archivos no se empaquetan en las imágenes ni se sustituyen al publicar código."
+          "text": "El Dockerfile del backend compila y publica la API en una etapa de construcción con el SDK de .NET 10. La imagen final utiliza el runtime de ASP.NET Core sobre Alpine y ejecuta la aplicación con un usuario sin privilegios. En el frontend, otra construcción por etapas genera los archivos de React y los entrega a Nginx.\n\nLos servicios api y web se ejecutan con sistema de archivos de solo lectura, sin capacidades Linux adicionales y con no-new-privileges. La comunicación interna pasa por diego-portfolio-net. El volumen diego-portfolio-data conserva en producción el contenido publicado, las imágenes, las estadísticas y el historial de errores. Publicar una imagen nueva nunca modifica el volumen: el contenido tiene su propio paso de despliegue, y las estadísticas y los errores no salen nunca del servidor."
         },
         {
           "title": "Dominio y acceso mediante Cloudflare Tunnel",
@@ -297,7 +298,7 @@
         },
         {
           "title": "Un proceso de integración continua por repositorio",
-          "text": "Cada repositorio contiene su workflow de GitHub Actions. Las pull requests dirigidas a main ejecutan las comprobaciones antes del merge. Un cambio incorporado a main inicia automáticamente la misma validación y, si pasa, la construcción y publicación de la imagen. También existe una ejecución manual para operaciones controladas.\n\nEn el backend se restauran las dependencias, se compila .NET y se ejecutan pruebas unitarias e integración contra una API real con datos aislados. En el frontend se instalan las dependencias con npm ci y se verifican TypeScript y la compilación de Vite. Ambos workflows comprueban los scripts de despliegue y sus escenarios de recuperación. Las acciones externas se fijan a commits concretos para controlar qué versión se ejecuta."
+          "text": "Cada repositorio contiene su workflow de GitHub Actions. Las pull requests dirigidas a main ejecutan las comprobaciones antes del merge. Un cambio incorporado a main inicia automáticamente la misma validación y, si pasa, la construcción y publicación de la imagen. También existe una ejecución manual para operaciones controladas.\n\nEn el backend se restauran las dependencias, se compila .NET y se ejecutan pruebas unitarias e integración contra una API real con datos aislados. El contenido versionado se valida en la misma PR: las pruebas lo cargan y pack-content.mjs comprueba que cada imagen referenciada esté en el repositorio. En el frontend se instalan las dependencias con npm ci y se verifican TypeScript y la compilación de Vite. Ambos workflows comprueban los scripts de despliegue y sus escenarios de recuperación. Las acciones externas se fijan a commits concretos para controlar qué versión se ejecuta."
         },
         {
           "title": "main protegida y aprobación de producción",
@@ -316,8 +317,12 @@
           "text": "Los dos repositorios adquieren el mismo bloqueo en la VM para evitar que sus despliegues modifiquen el stack simultáneamente. El script valida el servicio, el repositorio, el commit y la referencia de la imagen antes de continuar. Guarda la imagen anterior y recrea únicamente api o web con Docker Compose, manteniendo los volúmenes y el resto del stack.\n\nDespués espera a que el contenedor esté saludable y verifica tanto /healthz como /api/health a través de Nginx. Si la actualización falla después de cambiar la imagen, intenta restaurar la versión anterior, recrea el servicio y repite las comprobaciones. La ejecución queda marcada como fallida para poder revisarla. Cada despliegue completado registra commit, digest, fecha y referencia de la imagen anterior."
         },
         {
+          "title": "Contenido versionado y publicado desde main",
+          "text": "El contenido del portfolio vive en el repositorio del backend, en content/: un archivo por idioma y las imágenes que genera el editor. Editar un post o un proyecto es un commit y una pull request, con la misma revisión y las mismas comprobaciones que el código.\n\nTras desplegar la API, el mismo job de producción publica el contenido. En el runner, pack-content.mjs toma solo los archivos de idioma y las imágenes con el nombre que genera la API, y fija como revisión un hash del contenido, así que cualquier cambio invalida el ETag. El paquete viaja por su propia conexión SSH y deploy-content.sh se ejecuta con el mismo bloqueo que los despliegues de imágenes.\n\ndeploy-content.sh rechaza enlaces y nombres inesperados, guarda la versión anterior de cada idioma que cambia y coloca la nueva con un renombrado atómico, sin reiniciar la API. Las imágenes nuevas se añaden y las existentes no se sobrescriben ni se borran. Después comprueba /api/portfolio en cada idioma; si falla, restaura las copias y el workflow termina con error. Si el contenido no ha cambiado, el volumen no se toca."
+        },
+        {
           "title": "Contenido, observabilidad y mantenimiento",
-          "text": "El contenido profesional se administra desde un editor disponible únicamente en Development y desde el equipo local. La API valida los datos y utiliza una revisión para detectar ediciones concurrentes; ETag permite revalidar las lecturas. La integración con GitHub incorpora caché y un resultado degradado cuando el servicio externo no responde.\n\nPortfolio.Errors centraliza códigos y mensajes de error. La API devuelve respuestas de error estructuradas con estado HTTP, idioma y correlación; el historial privado persiste en el volumen y se consulta desde el editor protegido. Los mensajes de operación y error admiten español e inglés mediante language, sin traducir automáticamente el contenido editorial.\n\nSeparo la publicación de código del mantenimiento del contenido. El volumen se conserva al actualizar imágenes y tiene su propio proceso de copia de seguridad. Antes de sustituir datos del servidor preparo una copia y reviso la operación. La persistencia JSON está diseñada para una sola instancia; una evolución a varias réplicas requeriría trasladar esos contratos a una base de datos y almacenamiento compartido."
+          "text": "El contenido profesional se administra desde un editor disponible únicamente en Development y desde el equipo local, que guarda directamente en content/. La API valida los datos y utiliza una revisión para detectar ediciones concurrentes; ETag permite revalidar las lecturas. La integración con GitHub incorpora caché y un resultado degradado cuando el servicio externo no responde.\n\nPortfolio.Errors centraliza códigos y mensajes de error. La API devuelve respuestas de error estructuradas con estado HTTP, idioma y correlación; el historial privado persiste en el volumen y se consulta desde el editor protegido. Los mensajes de operación y error admiten español e inglés mediante language, sin traducir automáticamente el contenido editorial.\n\nCada publicación de contenido guarda la versión anterior en el servidor, y el volumen completo tiene además su propio proceso de copia de seguridad. La persistencia JSON está diseñada para una sola instancia; una evolución a varias réplicas requeriría trasladar esos contratos a una base de datos y almacenamiento compartido."
         }
       ]
     },
