@@ -1,5 +1,5 @@
 {
-  "revision": "4d32e2f43857495ca177c5e064dd6eca",
+  "revision": "a969a69a58eb410c85a1a8ce10487e06",
   "profile": {
     "name": "Diego Espina Rodríguez",
     "role": "Backend Developer · .NET / Azure",
@@ -74,6 +74,96 @@
       ],
       "links": [],
       "experienceId": "wembley-studios"
+    },
+    {
+      "id": "tercer-tiempo",
+      "title": "Tercer Tiempo",
+      "category": "Full stack",
+      "description": "Plataforma de rendimiento para el fútbol regional: actas internas comparadas con las de la federación, nota calculada por jugador y vídeo de cada partido, con .NET 10 y Vue 3.",
+      "details": "Tercer Tiempo es una plataforma de seguimiento del rendimiento de cada jugador, partido a partido, pensada para el fútbol asturiano. Cada club nombra al cuerpo técnico de sus equipos temporada a temporada con un código de acceso; el cuerpo técnico gestiona la plantilla, registra tras cada partido el acta interna (minutos, goles, asistencias, tiros, tarjetas) y la compara con el acta oficial que publica la federación. La nota de cada jugador no la pone nadie: se calcula con esos datos. Cada jugador se vincula a su ficha con un código personal y ve cuánto aporta a nivel individual, a su equipo y frente al resto de la liga.\n\nSi el equipo graba el partido, el club o el cuerpo técnico sube el vídeo: un servicio aparte lo recibe por trozos, lo comprime con ffmpeg sin bajar de 1080p y lo sirve a la plantilla; un analizador en Python con GPU detecta jugadores y balón y propone un acta interna a partir de las imágenes.\n\nBackend en .NET 10 por capas con Minimal APIs, Entity Framework Core y SQL Server, dos procesos web (API y servicio de vídeo) y trabajos en segundo plano que sincronizan ligas, partidos, clasificaciones y actas desde fuentes públicas. Frontend en Vue 3 con TypeScript, Tailwind 4, Pinia, ECharts y Three.js. Todo se levanta en contenedores con Docker Compose. En desarrollo, con un piloto con clubes previsto.",
+      "sections": [
+        {
+          "title": "Tres cuentas y un límite de privacidad",
+          "text": "Hay tres tipos de cuenta: club, cuerpo técnico y jugador. El club se da de alta eligiendo su nombre en un catálogo que agrupa el primer equipo y los filiales, y emite nombramientos para cada equipo y temporada: un rol, un código de acceso de un solo uso y una validez que nunca pasa del final de la temporada. El club puede acortarla, prorrogarla o revocarla, y al revocarla el técnico sale del cuerpo técnico.\n\nLa plantilla de un equipo en una temporada es el agregado central y el límite de privacidad: nace privada, solo la ven su cuerpo técnico y los jugadores vinculados, y el cuerpo técnico decide si hacerla pública. Cada ficha de jugador tiene un código personal de doce caracteres que genera el club o un técnico vigente; el jugador se da de alta solo con ese código, no escribe su nombre, y el código se consume al vincular."
+        },
+        {
+          "title": "Datos reales de las ligas asturianas",
+          "text": "Las ligas, equipos, partidos, clasificaciones y plantillas se sincronizan desde la API pública de futbolasturiano.es, respetando su robots.txt, con un User-Agent propio y un ritmo de una petición cada 150 milisegundos. La sincronización es idempotente y va liga a liga, de modo que un fallo en una no impide actualizar las demás. Cubre de 1ª a 3ª RFEF y las categorías regionales, y se puede cambiar por un proveedor de datos ficticios para trabajar sin red.\n\nLos escudos son siempre propios: la API los descarga una vez, los guarda con versión y los sirve ella misma con caché, sin enlazar a webs de terceros. El club puede sustituir los de sus equipos y corregir fichas de la plantilla publicada sin que la siguiente sincronización las pise."
+        },
+        {
+          "title": "El acta interna frente al acta oficial",
+          "text": "Tras cada partido el cuerpo técnico registra el acta interna de su plantilla. En paralelo, un trabajo en segundo plano lee el acta oficial de la federación (árbitro, alineaciones, minutos de entrada y salida, goles, tarjetas y sucesos en orden) solo para los partidos de equipos con plantilla en la app, y un comparador enfrenta las dos. Las actas completas no se vuelven a descargar.\n\nLa nota de cada jugador se calcula a partir de esos datos con unos pesos ajustables, y las estadísticas se comparan a nivel individual, con el equipo y frente al resto de la liga. Antes de cada partido, una previa estima las probabilidades con un modelo de Poisson sobre goles a favor y en contra, fuerza de cada equipo y ventaja local, y resume forma, balance, jugadores en racha y disciplina del rival a partir de las actas oficiales."
+        },
+        {
+          "title": "Vídeo de partido: subida reanudable y compresión",
+          "text": "El vídeo lo atiende un segundo proceso web con las mismas capas, la misma base de datos y el mismo JWT que la API, para que subir, servir y comprimir archivos de varios gigabytes no la cargue. La subida es por trozos de 16 MB y reanudable: se abre una sesión, cada trozo se escribe desde el desplazamiento ya confirmado, así un reintento nunca corrompe el temporal, y se publica al completar. Admite hasta 20 GB, solo mp4 o webm, y comprueba antes que el archivo cabe en el disco.\n\nAl publicarse, un worker lo recomprime con ffmpeg a H.264 sin bajar de 1080p, calidad constante y faststart: un partido grabado con un móvil pasa de unos 6 GB a dos o tres veces menos. La reproducción y la descarga van por rangos y con tickets; la plantilla lo ve gratis y quien no es de ella necesita un pase del partido, con una pasarela de pago simulada a la espera de la real."
+        },
+        {
+          "title": "Analizador de vídeo con GPU",
+          "text": "Cuando un vídeo queda listo entra en una cola de análisis. Un programa aparte en Python, con GPU, detecta y sigue a los jugadores y al balón, separa los dos equipos, calibra el campo con las medidas que el club apunta de su terreno de juego y saca posesión, mapas, eventos candidatos y una propuesta de acta interna en JSON. Un modelo de lenguaje, Claude u Ollama en local, puede confirmar los eventos y redactar.\n\nEl servicio de vídeo lo lanza como proceso externo, lee su progreso y guarda el resultado con una medida de calidad: fotogramas analizados, porcentaje con balón y porcentaje con el campo calibrado. Por debajo de unos umbrales, la propuesta se marca como poco fiable en lugar de darse por buena."
+        },
+        {
+          "title": "Arquitectura y API",
+          "text": "El backend separa Domain, Application, Repository, Infrastructure, Hosting, Api y Videos. Los endpoints son Minimal APIs agrupadas por recurso que llaman a una fachada en una línea; la validación va con FluentValidation; Identity guarda las credenciales y el JWT lleva el tipo de cuenta. La documentación es OpenAPI 3.1 nativa de .NET con referencia Scalar, siempre abierta en desarrollo y protegida con usuario y contraseña fuera de él.\n\nLos errores salen como ProblemDetails con códigos y mensajes guardados en base de datos. Un límite de llamadas por IP y por endpoint bloquea con escalones crecientes y responde 429 con Retry-After. Los trabajos en segundo plano dejan historial de cada ejecución y de cada llamada a webs externas, y una página de administración oculta permite lanzarlos a mano y ver las descargas en directo."
+        },
+        {
+          "title": "Frontend en Vue 3",
+          "text": "La SPA está en Vue 3 con TypeScript estricto, Vite y Tailwind 4 con configuración solo en CSS: todos los colores son variables con un valor por tema, así que las vistas no saben si están en claro u oscuro. Pinia lleva la sesión y Vue Router las guardas de acceso. Los gráficos son ECharts con un tema propio y en un chunk aparte que solo se descarga en las páginas que los usan.\n\nLa portada tiene un balón 3D en Three.js generado en código, con los doce pentágonos en los vértices de un icosaedro, que se descarga cuando el navegador está ocioso, se pausa fuera de pantalla y cae a un SVG si no hay WebGL o el usuario prefiere menos animación. GSAP anima el balón de carga y las líneas del campo de fondo. Hay un banner de sincronización, páginas de error con reintento y textos legales redactados conforme al RGPD."
+        },
+        {
+          "title": "Docker y entornos",
+          "text": "La API, el servicio de vídeo con ffmpeg y el frontal se levantan en contenedores unidos por una red: el Nginx del frontal reenvía /api al contenedor de la API y /media al de vídeo, de modo que web, API y vídeo comparten origen. Hay entornos de desarrollo, de datos ficticios con clubes inventados, de piloto con clubes reales y de producción con secretos en un fichero de entorno. Al arrancar, la API crea la base de datos si no existe, aplica las migraciones y sincroniza las ligas: una base vacía queda lista con datos reales en minutos.\n\nQuedan por delante la pasarela de pago real, refresh tokens y eventos de dominio con outbox, para los que ya hay puntos de extensión."
+        }
+      ],
+      "year": "2026",
+      "status": "En desarrollo",
+      "url": "",
+      "image": "",
+      "tags": [
+        ".NET 10",
+        "Minimal APIs",
+        "Entity Framework Core",
+        "SQL Server",
+        "ASP.NET Identity",
+        "JWT",
+        "FluentValidation",
+        "OpenAPI",
+        "ffmpeg",
+        "Python",
+        "Vue 3",
+        "TypeScript",
+        "Tailwind CSS",
+        "Pinia",
+        "ECharts",
+        "Three.js",
+        "Docker Compose",
+        "Nginx"
+      ],
+      "art": "pitch",
+      "featured": true,
+      "highlights": [
+        "Club, cuerpo técnico y jugador: nombramientos con código y la plantilla como límite de privacidad",
+        "Datos reales de las ligas asturianas sincronizados desde fuentes públicas, con respeto a robots.txt",
+        "Acta interna por partido comparada con el acta oficial de la federación",
+        "Nota de cada jugador calculada, nunca puesta a mano, y comparativa frente a la liga",
+        "Previa de partido con probabilidades a partir de las actas oficiales",
+        "Vídeo de partido: subida por trozos reanudable hasta 20 GB y compresión con ffmpeg a 1080p",
+        "Analizador de vídeo en Python con GPU que propone el acta a partir de las imágenes",
+        "Dos procesos web, API y vídeo, con las mismas capas, JWT y base de datos",
+        "OpenAPI 3.1 nativo, límite de llamadas con bloqueos escalonados y trabajos con historial",
+        "Vue 3, Tailwind 4, ECharts y Three.js, todo en contenedores con Docker Compose"
+      ],
+      "links": [
+        {
+          "label": "Repositorio backend",
+          "url": "https://github.com/diegoesp10/TercerTiempo-Back"
+        },
+        {
+          "label": "Repositorio frontend",
+          "url": "https://github.com/diegoesp10/TercerTiempo-Front"
+        }
+      ],
+      "experienceId": ""
     },
     {
       "id": "murmur",
