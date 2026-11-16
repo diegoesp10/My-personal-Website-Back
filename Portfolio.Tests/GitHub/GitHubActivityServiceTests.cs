@@ -82,6 +82,24 @@ public sealed class GitHubActivityServiceTests
     }
 
     [Fact]
+    public async Task Waits_for_the_rate_limit_reset_before_trying_again()
+    {
+        var clock = new ManualClock(Now);
+        var source = new FakeGitHubSource { Fail = true, RetryAt = Now.AddMinutes(45) };
+        var service = CreateService(source, clock);
+
+        await service.GetAsync(CancellationToken.None);
+        clock.Now = Now.AddMinutes(10); // past the configured retry delay, still inside the rate limit window
+        await service.GetAsync(CancellationToken.None);
+        clock.Now = Now.AddMinutes(46);
+        source.Fail = false;
+        var activity = await service.GetAsync(CancellationToken.None);
+
+        Assert.Equal(2, source.ProfileRequests);
+        Assert.True(activity.Available);
+    }
+
+    [Fact]
     public async Task Reports_unavailable_when_there_is_nothing_recent_to_serve()
     {
         var source = new FakeGitHubSource { Fail = true };
@@ -145,6 +163,7 @@ public sealed class GitHubActivityServiceTests
     private sealed class FakeGitHubSource : IGitHubSource
     {
         public bool Fail { get; set; }
+        public DateTimeOffset? RetryAt { get; set; }
         public int ProfileRequests { get; private set; }
         public string[] Languages { get; init; } = ["C#", "TypeScript"];
         public string? CommitMessage { get; init; }
@@ -152,7 +171,7 @@ public sealed class GitHubActivityServiceTests
         public Task<GitHubProfile> GetProfileAsync(string user, CancellationToken cancellationToken)
         {
             ProfileRequests++;
-            if (Fail) throw new GitHubUnavailableException("GitHub respondió 403.");
+            if (Fail) throw new GitHubUnavailableException("GitHub respondió 403.", retryAt: RetryAt);
             return Task.FromResult(new GitHubProfile(user, "Diego", "https://avatars.example/u", "https://github.com/" + user, "", 3, 1));
         }
 

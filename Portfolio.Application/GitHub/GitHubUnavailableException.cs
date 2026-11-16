@@ -1,4 +1,11 @@
 namespace Portfolio.Application.GitHub;
 
-public sealed class GitHubUnavailableException(string message, Exception? innerException = null)
-    : Exception(message, innerException);
+/// <summary>
+/// GitHub could not be read. When GitHub said when it can be tried again (its rate limit reset or a Retry-After),
+/// <see cref="RetryAt"/> carries that moment so the service does not insist before.
+/// </summary>
+public sealed class GitHubUnavailableException(string message, Exception? innerException = null, DateTimeOffset? retryAt = null)
+    : Exception(message, innerException)
+{
+    public DateTimeOffset? RetryAt { get; } = retryAt;
+}
