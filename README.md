@@ -59,7 +59,7 @@ La API queda en <http://127.0.0.1:5080>. Para ver la web, arranca el frontal con
 | `Site:DefaultImage` | `/og-image.png` | Imagen para compartir (1200×630) cuando la página no tiene una propia; la sirve el frontal. |
 | `GitHub:User` | `diegoesp10` | Usuario cuya actividad pública se muestra. |
 | `GitHub:Enabled` | `true` | `false` desactiva las llamadas a GitHub (lo usan las pruebas). |
-| `GitHub:Token` (`GitHub__Token`) | vacío | Token opcional de solo lectura para ampliar el límite de GitHub. No hace falta con la caché. |
+| `GitHub:Token` (`GitHub__Token`) | vacío | Token de solo lectura (fine-grained, sin permisos: solo repositorios públicos) que sube el límite de GitHub de 60 a 5000 llamadas por hora y por dirección. Sin él, una actualización gasta unas quince llamadas y un servidor con tráfico agota el límite; la API entonces espera al reinicio que indica GitHub en lugar de insistir. En el servidor va en `~/portfolio/.env` como `PORTFOLIO_GITHUB_TOKEN`. |
 | `RateLimiting:PermitLimit` / `Window` | `300` / `00:01:00` | Peticiones por IP y ventana. |
 | `ReverseProxy:Enabled` | `false` | Confía en `X-Forwarded-For/Proto` del proxy. Docker lo activa, porque la API solo es accesible a través de Nginx y de loopback. |
 | `ReverseProxy:ClientIpHeader` | `X-Forwarded-For` | Cabecera con la IP del visitante. Detrás de Cloudflare, `CF-Connecting-IP` (en Docker: `PORTFOLIO_CLIENT_IP_HEADER`). |
@@ -157,7 +157,7 @@ La imagen lleva `content/portfolio*.json` como semilla (`seed.json`, `seed.en.js
 
 La revisión de cada idioma (su ETag) se calcula al publicar a partir del propio contenido, de modo que cualquier cambio llega al navegador aunque se edite el JSON a mano. `-ContentOnly` sigue el mismo camino desde tu equipo, para una corrección urgente entre merges; el siguiente merge vuelve a publicar lo que haya en `main`. Las visitas y el historial de errores del servidor nunca se tocan.
 
-- `deploy/compose.yaml` define el despliegue del servidor: `api`, `web` (publicada solo en el loopback del servidor) y `tunnel` (`cloudflared`, activo cuando `~/portfolio/.env` contiene el token). `deploy/install.sh` se ejecuta allí: carga las imágenes, importa `content/` si el volumen no tiene contenido y arranca el compose.
+- `deploy/compose.yaml` define el despliegue del servidor: `api`, `web` (publicada solo en el loopback del servidor) y `tunnel` (`cloudflared`, activo cuando `~/portfolio/.env` contiene el token). Ese mismo `.env` lleva `PORTFOLIO_GITHUB_TOKEN` (ver `GitHub:Token`): tras añadirlo, `cd ~/portfolio && docker compose up -d api` recrea la API con él; los despliegues posteriores lo conservan. `deploy/install.sh` se ejecuta allí: carga las imágenes, importa `content/` si el volumen no tiene contenido y arranca el compose.
 - El primer despliegue importa `portfolio.json`, `portfolio.en.json` y `uploads`; desde ahí, el contenido lo publica el CI/CD. Las estadísticas de visitas solo existen en el servidor y nunca se sustituyen.
 - En Cloudflare, los nombres de host públicos del túnel (`diegoespinarodriguez.com` y `www`) apuntan a `http://web:8080`. Para que el mapa de visitas tenga ubicación, activa «Add visitor location headers» en *Rules › Transform Rules › Managed Transforms*. No crees registros DNS con la IP del servidor.
 - Para revisar la web publicada sin pasar por Cloudflare: `ssh -L 8080:127.0.0.1:8080 diego-portfolio` y abre <http://127.0.0.1:8080>. Registros: `ssh diego-portfolio "cd portfolio; docker compose logs --tail 100"`.

@@ -37,9 +37,12 @@ public sealed class GitHubActivityService(IGitHubSource source, IOptions<GitHubO
             }
             catch (GitHubUnavailableException exception)
             {
-                _nextAttempt = clock.GetUtcNow() + settings.RetryDelay;
+                // GitHub may say when it can be tried again (rate limit reset); otherwise wait the configured delay.
+                var defaultAttempt = clock.GetUtcNow() + settings.RetryDelay;
+                _nextAttempt = exception.RetryAt is { } retryAt && retryAt > defaultAttempt ? retryAt : defaultAttempt;
                 var traceId = correlation.CurrentTraceId ?? Guid.NewGuid().ToString("N");
-                logger.LogWarning("GitHub refresh failed: {ExceptionType}; correlation {TraceId}", exception.GetType().FullName, traceId);
+                logger.LogWarning("GitHub refresh failed: {Reason}; next attempt at {NextAttempt}; correlation {TraceId}",
+                    exception.Message, _nextAttempt, traceId);
                 // The endpoint still serves its documented degraded response (HTTP 200).
                 await reporter.ReportAsync(new ErrorRecord(Guid.NewGuid().ToString("N"), clock.GetUtcNow(),
                     "github.unavailable", 200, traceId, "GET", "api/github", exception.GetType().FullName, "dependency"));

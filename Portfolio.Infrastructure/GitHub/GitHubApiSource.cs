@@ -62,7 +62,12 @@ public sealed class GitHubApiSource(IHttpClientFactory clientFactory) : IGitHubS
             using var response = await client.GetAsync(path, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
             if (allowConflict && response.StatusCode == HttpStatusCode.Conflict) return default;
             if (!response.IsSuccessStatusCode)
-                throw new GitHubUnavailableException($"GitHub respondió {(int)response.StatusCode} a {path}.");
+            {
+                var retryAt = RetryAt(response);
+                throw new GitHubUnavailableException(
+                    $"GitHub respondió {(int)response.StatusCode} a {path}{(retryAt is null ? "" : $"; límite agotado hasta {retryAt:u}")}.",
+                    retryAt: retryAt);
+            }
             return await response.Content.ReadFromJsonAsync<T>(JsonOptions, cancellationToken);
         }
         catch (HttpRequestException exception)
@@ -78,6 +83,25 @@ public sealed class GitHubApiSource(IHttpClientFactory clientFactory) : IGitHubS
             throw new GitHubUnavailableException("GitHub no respondió a tiempo.", exception);
         }
     }
+
+    /// <summary>
+    /// When GitHub refuses for its rate limit (403 or 429 with no remaining calls, or a Retry-After), the moment it
+    /// can be tried again. Without a token the limit is 60 calls an hour per address, and one refresh spends about
+    /// fifteen, so insisting every couple of minutes would keep the quota at zero for the whole hour.
+    /// </summary>
+    private static DateTimeOffset? RetryAt(HttpResponseMessage response)
+    {
+        if (response.StatusCode is not (HttpStatusCode.Forbidden or HttpStatusCode.TooManyRequests)) return null;
+        if (response.Headers.RetryAfter?.Delta is { } delta) return DateTimeOffset.UtcNow + delta;
+        if (response.Headers.RetryAfter?.Date is { } date) return date;
+        if (Header(response, "X-RateLimit-Remaining") == "0"
+            && long.TryParse(Header(response, "X-RateLimit-Reset"), out var reset))
+            return DateTimeOffset.FromUnixTimeSeconds(reset).AddSeconds(5);
+        return null;
+    }
+
+    private static string? Header(HttpResponseMessage response, string name)
+        => response.Headers.TryGetValues(name, out var values) ? values.FirstOrDefault() : null;
 
     private static string Escape(string value) => Uri.EscapeDataString(value);
 
